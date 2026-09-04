@@ -180,8 +180,40 @@ class DirectoryDiscoveryProvider implements GroupDiscoveryProvider {
         }>;
       };
       if (!Array.isArray(payload.results)) throw new Error("Resposta do provider fora do formato esperado.");
-      const out: GroupDiscoveryResult[] = [];
-      for (const item of payload.results) {
+      return parseDirectoryResults(payload.results);
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("Provider não respondeu dentro do tempo esperado.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+  validateGroup(reference: string) {
+    return validatePublicTelegramGroup(reference);
+  }
+}
+
+type DirectoryItem = {
+  externalId?: string;
+  external_id?: string;
+  reference?: string;
+  publicLink?: string;
+  public_link?: string;
+  link?: string;
+  username?: string;
+  title?: string;
+  description?: string;
+  memberCount?: number;
+  member_count?: number;
+  discoveredAt?: string;
+  discovered_at?: string;
+};
+
+export function parseDirectoryResults(items: DirectoryItem[]): GroupDiscoveryResult[] {
+  const out: GroupDiscoveryResult[] = [];
+  for (const item of items) {
         const reference = item.reference ?? item.publicLink ?? item.public_link ?? item.link ?? item.username ?? "";
         if (!reference) continue;
         const normalized = normalizeGroupReference(reference);
@@ -196,20 +228,12 @@ class DirectoryDiscoveryProvider implements GroupDiscoveryProvider {
           source: this.name,
           discoveredAt: item.discoveredAt ?? item.discovered_at ?? null,
         });
-      }
-      return out;
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error("Provider não respondeu dentro do tempo esperado.");
-      }
-      throw error;
-    } finally {
-      clearTimeout(timer);
-    }
   }
-  validateGroup(reference: string) {
-    return validatePublicTelegramGroup(reference);
-  }
+  return out;
+}
+
+export function createDirectoryDiscoveryProvider(url: string, key: string): GroupDiscoveryProvider {
+  return new DirectoryDiscoveryProvider(url, key);
 }
 
 /** Seed provider: the operator supplies the references, we validate them for real. */

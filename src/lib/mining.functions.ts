@@ -42,7 +42,15 @@ export const startMining = createServerFn({ method: "POST" })
 
     const { data: job, error } = await supabase
       .from("group_mining_jobs")
-      .insert({ workspace_id: workspaceId, keywords, categories: data.categories ?? [], status: "pending" })
+      .insert({
+        workspace_id: workspaceId,
+        keywords,
+        categories: data.categories ?? [],
+        status: "pending",
+        progress_stage: "queued",
+        progress_message: data.seedReferences?.length ? "Importação pública aguardando processamento" : "Aguardando processamento",
+        created_by: context.userId,
+      })
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -57,7 +65,10 @@ export const startMining = createServerFn({ method: "POST" })
       },
       idempotency_key: `group_mining:${job.id}`,
     });
-    if (queueError) throw new Error(queueError.message);
+    if (queueError) {
+      await supabase.from("group_mining_jobs").update({ status: "failed", error: queueError.message }).eq("id", job.id);
+      throw new Error(queueError.message);
+    }
 
     await supabase.from("audit_logs").insert({
       workspace_id: workspaceId,
@@ -67,6 +78,13 @@ export const startMining = createServerFn({ method: "POST" })
       result: "queued",
     });
 
+    try {
+      const { processQueue } = await import("@/lib/queue.server");
+      await processQueue();
+    } catch {
+      // The persisted queue remains the source of truth and can be retried by cron.
+    }
+
     return { ok: true as const, jobId: job.id as string };
   });
 
@@ -75,7 +93,7 @@ export const getMiningStatus = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const supabase = context.supabase as unknown as LooseClient;
     const { workspaceId } = await requireWorkspace(supabase, context.userId);
-    const [{ data: jobs }, totals, available, keywordCount] = await Promise.all([
+    const [{ data: jobs }, totals, available, keywordCount, providerConfig] = await Promise.all([
       supabase
         .from("group_mining_jobs")
         .select("*")
@@ -89,13 +107,22 @@ export const getMiningStatus = createServerFn({ method: "GET" })
         .eq("workspace_id", workspaceId)
         .eq("status", "validated"),
       supabase.from("group_keywords").select("id", { count: "exact", head: true }).eq("workspace_id", workspaceId),
+      (async () => {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        return supabaseAdmin
+          .from("group_discovery_provider_configs")
+          .select("status")
+          .eq("workspace_id", workspaceId)
+          .maybeSingle();
+      })(),
     ]);
     return {
       jobs: (jobs ?? []) as any[],
       totalGroups: (totals as any).count ?? 0,
       availableGroups: (available as any).count ?? 0,
       keywords: (keywordCount as any).count ?? 0,
-      providerConfigured: Boolean(process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"]),
+      providerConfigured: Boolean(providerConfig.data || (process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"])),
+      providerStatus: providerConfig.data?.status ?? (process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"] ? "not_tested" : "not_configured"),
       missingProviderEnv: [
         process.env["GROUP_DIRECTORY_API_URL"] ? null : "GROUP_DIRECTORY_API_URL",
         process.env["GROUP_DIRECTORY_API_KEY"] ? null : "GROUP_DIRECTORY_API_KEY",
