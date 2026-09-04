@@ -11,6 +11,8 @@ const STATUS_TONES: Record<string, string> = {
   published: "bg-success/15 text-success border-success/30",
   paid: "bg-success/15 text-success border-success/30",
   completed: "bg-success/15 text-success border-success/30",
+  completed_with_errors: "bg-warning/15 text-warning border-warning/30",
+  connected: "bg-success/15 text-success border-success/30",
   pending_auth: "bg-warning/15 text-warning border-warning/30",
   pending: "bg-warning/15 text-warning border-warning/30",
   paused: "bg-warning/15 text-warning border-warning/30",
@@ -27,6 +29,8 @@ const STATUS_TONES: Record<string, string> = {
   finished: "bg-muted text-muted-foreground border-border",
   pending_config: "bg-warning/15 text-warning border-warning/30",
   awaiting_config: "bg-warning/15 text-warning border-warning/30",
+  not_configured: "bg-warning/15 text-warning border-warning/30",
+  not_tested: "bg-info/15 text-info border-info/30",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -43,6 +47,8 @@ const STATUS_LABELS: Record<string, string> = {
   pending: "Pendente",
   processing: "Processando",
   completed: "Concluído",
+  completed_with_errors: "Concluído com alertas",
+  connected: "Conectado",
   retry: "Retry",
   sent: "Enviado",
   skipped: "Pulado",
@@ -52,6 +58,8 @@ const STATUS_LABELS: Record<string, string> = {
   upload: "Upload",
   pending_config: "Configuração necessária",
   awaiting_config: "Configuração necessária",
+  not_configured: "Não configurado",
+  not_tested: "Não testado",
 };
 
 export function StatusBadge({ status }: { status: string | null | undefined }) {

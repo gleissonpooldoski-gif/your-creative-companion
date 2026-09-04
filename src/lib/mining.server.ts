@@ -97,7 +97,9 @@ export async function runMiningJob(
     .eq("workspace_id", input.workspaceId)
     .maybeSingle();
   if (!job) return { ok: false, message: "job de mineração não encontrado" };
-  if (job.status === "completed") return { ok: true, message: "mineração já concluída (idempotente)" };
+  if (job.status === "completed" || job.status === "completed_with_errors") {
+    return { ok: true, message: "mineração já concluída (idempotente)" };
+  }
   if (job.status === "cancelled") return { ok: true, message: "mineração cancelada" };
 
   await admin

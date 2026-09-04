@@ -267,6 +267,8 @@ function MiningPage() {
                   <th className="py-2">Novos</th>
                   <th className="py-2">Duplicados</th>
                   <th className="py-2">Inválidos</th>
+                  <th className="py-2">Provider</th>
+                  <th className="py-2">Tentativas</th>
                   <th className="py-2">Criado</th>
                   <th className="py-2">Diagnóstico</th>
                 </tr>
@@ -282,6 +284,8 @@ function MiningPage() {
                     <td className="py-2">{job.total_new ?? 0}</td>
                     <td className="py-2">{job.total_duplicate ?? 0}</td>
                     <td className="py-2">{job.total_invalid ?? 0}</td>
+                    <td className="py-2">{job.provider ?? "—"}</td>
+                    <td className="py-2">{job.attempt_count ?? 0}</td>
                     <td className="py-2">{formatDateTime(job.created_at)}</td>
                     <td className={job.error ? "py-2 text-destructive" : "py-2 text-muted-foreground"}>
                       {job.error ?? job.progress_message ?? job.progress_stage ?? "—"}
