@@ -11,6 +11,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ErrorState, LoadingSkeleton } from "@/components/app/states";
 import { PageHeader, StatusBadge } from "@/components/app/primitives";
+import { MtprotoAccountsSection } from "@/components/app/mtproto-accounts";
+
 import { useWorkspace } from "@/hooks/use-workspace";
 import { completeOnboarding, saveSettings, setGlobalPause } from "@/lib/data.functions";
 import { getDirectoryProviderStatus, saveDirectoryProvider, testDirectoryProvider } from "@/lib/provider-config.functions";
@@ -193,6 +195,9 @@ function SettingsPage() {
           <p className="text-sm text-muted-foreground">Somente proprietários e administradores podem alterar esta integração.</p>
         )}
       </section>
+
+      <MtprotoAccountsSection canManage={canConfigureProvider} />
+
 
       <section className="panel space-y-3 p-4">
         <h2 className="text-sm font-semibold">Integrações</h2>

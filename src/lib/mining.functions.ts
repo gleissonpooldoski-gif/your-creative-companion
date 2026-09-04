@@ -28,7 +28,10 @@ const startInput = z.object({
   keywords: z.array(z.string().min(2).max(60)).min(1).max(50),
   categories: z.array(z.string().min(2).max(40)).max(20).optional(),
   seedReferences: z.array(z.string().min(2).max(200)).max(100).optional(),
+  provider: z.enum(["auto", "telegram_mtproto", "directory_api"]).optional(),
+  mtprotoSessionId: z.string().uuid().optional(),
 });
+
 
 export const startMining = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -49,8 +52,11 @@ export const startMining = createServerFn({ method: "POST" })
         status: "pending",
         progress_stage: "queued",
         progress_message: data.seedReferences?.length ? "Importação pública aguardando processamento" : "Aguardando processamento",
+        requested_provider: data.seedReferences?.length ? "auto" : (data.provider ?? "auto"),
+        ...(data.mtprotoSessionId ? { mtproto_session_id: data.mtprotoSessionId } : {}),
         created_by: context.userId,
       })
+
       .select("id")
       .single();
     if (error) throw new Error(error.message);
@@ -116,18 +122,38 @@ export const getMiningStatus = createServerFn({ method: "GET" })
           .maybeSingle();
       })(),
     ]);
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: mtprotoSessions } = await (supabaseAdmin as any)
+      .from("telegram_mtproto_sessions")
+      .select("id, label, phone_masked, status, flood_wait_until")
+      .eq("workspace_id", workspaceId)
+      .order("created_at", { ascending: true });
+    const sessions = (mtprotoSessions ?? []) as any[];
+    const connected = sessions.filter((session) => session.status === "connected");
+
     return {
       jobs: (jobs ?? []) as any[],
       totalGroups: (totals as any).count ?? 0,
       availableGroups: (available as any).count ?? 0,
       keywords: (keywordCount as any).count ?? 0,
-      providerConfigured: Boolean(providerConfig.data || (process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"])),
+      mtprotoSessions: connected.map((session) => ({
+        id: session.id as string,
+        label: session.label as string,
+        phone_masked: session.phone_masked as string,
+        flood_wait_until: session.flood_wait_until as string | null,
+      })),
+      mtprotoConfigured: connected.length > 0,
+      providerConfigured:
+        connected.length > 0 ||
+        Boolean(providerConfig.data || (process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"])),
       providerStatus: providerConfig.data?.status ?? (process.env["GROUP_DIRECTORY_API_URL"] && process.env["GROUP_DIRECTORY_API_KEY"] ? "not_tested" : "not_configured"),
       missingProviderEnv: [
         process.env["GROUP_DIRECTORY_API_URL"] ? null : "GROUP_DIRECTORY_API_URL",
         process.env["GROUP_DIRECTORY_API_KEY"] ? null : "GROUP_DIRECTORY_API_KEY",
       ].filter(Boolean) as string[],
     };
+
   });
 
 const filterInput = z.object({
