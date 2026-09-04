@@ -214,20 +214,20 @@ type DirectoryItem = {
 export function parseDirectoryResults(items: DirectoryItem[]): GroupDiscoveryResult[] {
   const out: GroupDiscoveryResult[] = [];
   for (const item of items) {
-        const reference = item.reference ?? item.publicLink ?? item.public_link ?? item.link ?? item.username ?? "";
-        if (!reference) continue;
-        const normalized = normalizeGroupReference(reference);
-        out.push({
-          reference,
-          externalId: item.externalId ?? item.external_id ?? null,
-          username: item.username ?? normalized?.username ?? null,
-          publicLink: item.publicLink ?? item.public_link ?? item.link ?? normalized?.inviteLink ?? null,
-          title: item.title ?? null,
-          description: item.description ?? null,
-          memberCount: item.memberCount ?? item.member_count ?? null,
-          source: this.name,
-          discoveredAt: item.discoveredAt ?? item.discovered_at ?? null,
-        });
+    const reference = item.reference ?? item.publicLink ?? item.public_link ?? item.link ?? item.username ?? "";
+    if (!reference) continue;
+    const normalized = normalizeGroupReference(reference);
+    out.push({
+      reference,
+      externalId: item.externalId ?? item.external_id ?? null,
+      username: item.username ?? normalized?.username ?? null,
+      publicLink: item.publicLink ?? item.public_link ?? item.link ?? normalized?.inviteLink ?? null,
+      title: item.title ?? null,
+      description: item.description ?? null,
+      memberCount: item.memberCount ?? item.member_count ?? null,
+      source: "directory_api",
+      discoveredAt: item.discoveredAt ?? item.discovered_at ?? null,
+    });
   }
   return out;
 }
