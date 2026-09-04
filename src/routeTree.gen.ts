@@ -10,33 +10,432 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedAccountsRouteImport } from './routes/_authenticated/accounts'
+import { Route as AuthenticatedBotsRouteImport } from './routes/_authenticated/bots'
+import { Route as AuthenticatedBrainRouteImport } from './routes/_authenticated/brain'
+import { Route as AuthenticatedCloneBotRouteImport } from './routes/_authenticated/clone-bot'
+import { Route as AuthenticatedClonedBotsRouteImport } from './routes/_authenticated/cloned-bots'
+import { Route as AuthenticatedCrmRouteImport } from './routes/_authenticated/crm'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDmFlowRouteImport } from './routes/_authenticated/dm-flow'
+import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
+import { Route as AuthenticatedInstagramRouteImport } from './routes/_authenticated/instagram'
+import { Route as AuthenticatedMiniAppRouteImport } from './routes/_authenticated/mini-app'
+import { Route as AuthenticatedObservabilityRouteImport } from './routes/_authenticated/observability'
+import { Route as AuthenticatedPersonaRouteImport } from './routes/_authenticated/persona'
+import { Route as AuthenticatedProspectingRouteImport } from './routes/_authenticated/prospecting'
+import { Route as AuthenticatedQueueRouteImport } from './routes/_authenticated/queue'
+import { Route as AuthenticatedRemarketingRouteImport } from './routes/_authenticated/remarketing'
+import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
+import { Route as AuthenticatedSmmRouteImport } from './routes/_authenticated/smm'
+import { Route as AuthenticatedTransactionsRouteImport } from './routes/_authenticated/transactions'
+import { Route as AuthenticatedWalletRouteImport } from './routes/_authenticated/wallet'
+import { Route as AuthenticatedAiIndexRouteImport } from './routes/_authenticated/ai.index'
+import { Route as AuthenticatedCampaignsIndexRouteImport } from './routes/_authenticated/campaigns.index'
+import { Route as AuthenticatedCampaignsNewRouteImport } from './routes/_authenticated/campaigns.new'
+import { Route as AuthenticatedGroupsEnteredRouteImport } from './routes/_authenticated/groups.entered'
+import { Route as AuthenticatedGroupsFillRouteImport } from './routes/_authenticated/groups.fill'
+import { Route as AuthenticatedGroupsMiningRouteImport } from './routes/_authenticated/groups.mining'
+import { Route as AuthenticatedGroupsMirroredRouteImport } from './routes/_authenticated/groups.mirrored'
+import { Route as AuthenticatedAiAgentsNewRouteImport } from './routes/_authenticated/ai.agents.new'
+import { Route as ApiPublicCronProcessQueueRouteImport } from './routes/api/public/cron/process-queue'
+import { Route as ApiPublicTelegramWebhookAccountIdRouteImport } from './routes/api/public/telegram/webhook.$accountId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedAccountsRoute = AuthenticatedAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBotsRoute = AuthenticatedBotsRouteImport.update({
+  id: '/bots',
+  path: '/bots',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedBrainRoute = AuthenticatedBrainRouteImport.update({
+  id: '/brain',
+  path: '/brain',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCloneBotRoute = AuthenticatedCloneBotRouteImport.update({
+  id: '/clone-bot',
+  path: '/clone-bot',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedClonedBotsRoute = AuthenticatedClonedBotsRouteImport.update({
+  id: '/cloned-bots',
+  path: '/cloned-bots',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCrmRoute = AuthenticatedCrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDmFlowRoute = AuthenticatedDmFlowRouteImport.update({
+  id: '/dm-flow',
+  path: '/dm-flow',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedInstagramRoute = AuthenticatedInstagramRouteImport.update({
+  id: '/instagram',
+  path: '/instagram',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMiniAppRoute = AuthenticatedMiniAppRouteImport.update({
+  id: '/mini-app',
+  path: '/mini-app',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedObservabilityRoute =
+  AuthenticatedObservabilityRouteImport.update({
+    id: '/observability',
+    path: '/observability',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPersonaRoute = AuthenticatedPersonaRouteImport.update({
+  id: '/persona',
+  path: '/persona',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProspectingRoute =
+  AuthenticatedProspectingRouteImport.update({
+    id: '/prospecting',
+    path: '/prospecting',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedQueueRoute = AuthenticatedQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRemarketingRoute =
+  AuthenticatedRemarketingRouteImport.update({
+    id: '/remarketing',
+    path: '/remarketing',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedSmmRoute = AuthenticatedSmmRouteImport.update({
+  id: '/smm',
+  path: '/smm',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedTransactionsRoute =
+  AuthenticatedTransactionsRouteImport.update({
+    id: '/transactions',
+    path: '/transactions',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedWalletRoute = AuthenticatedWalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedAiIndexRoute = AuthenticatedAiIndexRouteImport.update({
+  id: '/ai/',
+  path: '/ai/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedCampaignsIndexRoute =
+  AuthenticatedCampaignsIndexRouteImport.update({
+    id: '/campaigns/',
+    path: '/campaigns/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCampaignsNewRoute =
+  AuthenticatedCampaignsNewRouteImport.update({
+    id: '/campaigns/new',
+    path: '/campaigns/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGroupsEnteredRoute =
+  AuthenticatedGroupsEnteredRouteImport.update({
+    id: '/groups/entered',
+    path: '/groups/entered',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGroupsFillRoute = AuthenticatedGroupsFillRouteImport.update({
+  id: '/groups/fill',
+  path: '/groups/fill',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedGroupsMiningRoute =
+  AuthenticatedGroupsMiningRouteImport.update({
+    id: '/groups/mining',
+    path: '/groups/mining',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedGroupsMirroredRoute =
+  AuthenticatedGroupsMirroredRouteImport.update({
+    id: '/groups/mirrored',
+    path: '/groups/mirrored',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAiAgentsNewRoute =
+  AuthenticatedAiAgentsNewRouteImport.update({
+    id: '/ai/agents/new',
+    path: '/ai/agents/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const ApiPublicCronProcessQueueRoute =
+  ApiPublicCronProcessQueueRouteImport.update({
+    id: '/api/public/cron/process-queue',
+    path: '/api/public/cron/process-queue',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiPublicTelegramWebhookAccountIdRoute =
+  ApiPublicTelegramWebhookAccountIdRouteImport.update({
+    id: '/api/public/telegram/webhook/$accountId',
+    path: '/api/public/telegram/webhook/$accountId',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
+  '/bots': typeof AuthenticatedBotsRoute
+  '/brain': typeof AuthenticatedBrainRoute
+  '/clone-bot': typeof AuthenticatedCloneBotRoute
+  '/cloned-bots': typeof AuthenticatedClonedBotsRoute
+  '/crm': typeof AuthenticatedCrmRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dm-flow': typeof AuthenticatedDmFlowRoute
+  '/inbox': typeof AuthenticatedInboxRoute
+  '/instagram': typeof AuthenticatedInstagramRoute
+  '/mini-app': typeof AuthenticatedMiniAppRoute
+  '/observability': typeof AuthenticatedObservabilityRoute
+  '/persona': typeof AuthenticatedPersonaRoute
+  '/prospecting': typeof AuthenticatedProspectingRoute
+  '/queue': typeof AuthenticatedQueueRoute
+  '/remarketing': typeof AuthenticatedRemarketingRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/smm': typeof AuthenticatedSmmRoute
+  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/groups/entered': typeof AuthenticatedGroupsEnteredRoute
+  '/groups/fill': typeof AuthenticatedGroupsFillRoute
+  '/groups/mining': typeof AuthenticatedGroupsMiningRoute
+  '/groups/mirrored': typeof AuthenticatedGroupsMirroredRoute
+  '/ai/': typeof AuthenticatedAiIndexRoute
+  '/campaigns/': typeof AuthenticatedCampaignsIndexRoute
+  '/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
+  '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/accounts': typeof AuthenticatedAccountsRoute
+  '/bots': typeof AuthenticatedBotsRoute
+  '/brain': typeof AuthenticatedBrainRoute
+  '/clone-bot': typeof AuthenticatedCloneBotRoute
+  '/cloned-bots': typeof AuthenticatedClonedBotsRoute
+  '/crm': typeof AuthenticatedCrmRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dm-flow': typeof AuthenticatedDmFlowRoute
+  '/inbox': typeof AuthenticatedInboxRoute
+  '/instagram': typeof AuthenticatedInstagramRoute
+  '/mini-app': typeof AuthenticatedMiniAppRoute
+  '/observability': typeof AuthenticatedObservabilityRoute
+  '/persona': typeof AuthenticatedPersonaRoute
+  '/prospecting': typeof AuthenticatedProspectingRoute
+  '/queue': typeof AuthenticatedQueueRoute
+  '/remarketing': typeof AuthenticatedRemarketingRoute
+  '/settings': typeof AuthenticatedSettingsRoute
+  '/smm': typeof AuthenticatedSmmRoute
+  '/transactions': typeof AuthenticatedTransactionsRoute
+  '/wallet': typeof AuthenticatedWalletRoute
+  '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/groups/entered': typeof AuthenticatedGroupsEnteredRoute
+  '/groups/fill': typeof AuthenticatedGroupsFillRoute
+  '/groups/mining': typeof AuthenticatedGroupsMiningRoute
+  '/groups/mirrored': typeof AuthenticatedGroupsMirroredRoute
+  '/ai': typeof AuthenticatedAiIndexRoute
+  '/campaigns': typeof AuthenticatedCampaignsIndexRoute
+  '/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
+  '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/accounts': typeof AuthenticatedAccountsRoute
+  '/_authenticated/bots': typeof AuthenticatedBotsRoute
+  '/_authenticated/brain': typeof AuthenticatedBrainRoute
+  '/_authenticated/clone-bot': typeof AuthenticatedCloneBotRoute
+  '/_authenticated/cloned-bots': typeof AuthenticatedClonedBotsRoute
+  '/_authenticated/crm': typeof AuthenticatedCrmRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dm-flow': typeof AuthenticatedDmFlowRoute
+  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
+  '/_authenticated/instagram': typeof AuthenticatedInstagramRoute
+  '/_authenticated/mini-app': typeof AuthenticatedMiniAppRoute
+  '/_authenticated/observability': typeof AuthenticatedObservabilityRoute
+  '/_authenticated/persona': typeof AuthenticatedPersonaRoute
+  '/_authenticated/prospecting': typeof AuthenticatedProspectingRoute
+  '/_authenticated/queue': typeof AuthenticatedQueueRoute
+  '/_authenticated/remarketing': typeof AuthenticatedRemarketingRoute
+  '/_authenticated/settings': typeof AuthenticatedSettingsRoute
+  '/_authenticated/smm': typeof AuthenticatedSmmRoute
+  '/_authenticated/transactions': typeof AuthenticatedTransactionsRoute
+  '/_authenticated/wallet': typeof AuthenticatedWalletRoute
+  '/_authenticated/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/_authenticated/groups/entered': typeof AuthenticatedGroupsEnteredRoute
+  '/_authenticated/groups/fill': typeof AuthenticatedGroupsFillRoute
+  '/_authenticated/groups/mining': typeof AuthenticatedGroupsMiningRoute
+  '/_authenticated/groups/mirrored': typeof AuthenticatedGroupsMirroredRoute
+  '/_authenticated/ai/': typeof AuthenticatedAiIndexRoute
+  '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
+  '/_authenticated/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
+  '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/accounts'
+    | '/bots'
+    | '/brain'
+    | '/clone-bot'
+    | '/cloned-bots'
+    | '/crm'
+    | '/dashboard'
+    | '/dm-flow'
+    | '/inbox'
+    | '/instagram'
+    | '/mini-app'
+    | '/observability'
+    | '/persona'
+    | '/prospecting'
+    | '/queue'
+    | '/remarketing'
+    | '/settings'
+    | '/smm'
+    | '/transactions'
+    | '/wallet'
+    | '/campaigns/new'
+    | '/groups/entered'
+    | '/groups/fill'
+    | '/groups/mining'
+    | '/groups/mirrored'
+    | '/ai/'
+    | '/campaigns/'
+    | '/ai/agents/new'
+    | '/api/public/cron/process-queue'
+    | '/api/public/telegram/webhook/$accountId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/accounts'
+    | '/bots'
+    | '/brain'
+    | '/clone-bot'
+    | '/cloned-bots'
+    | '/crm'
+    | '/dashboard'
+    | '/dm-flow'
+    | '/inbox'
+    | '/instagram'
+    | '/mini-app'
+    | '/observability'
+    | '/persona'
+    | '/prospecting'
+    | '/queue'
+    | '/remarketing'
+    | '/settings'
+    | '/smm'
+    | '/transactions'
+    | '/wallet'
+    | '/campaigns/new'
+    | '/groups/entered'
+    | '/groups/fill'
+    | '/groups/mining'
+    | '/groups/mirrored'
+    | '/ai'
+    | '/campaigns'
+    | '/ai/agents/new'
+    | '/api/public/cron/process-queue'
+    | '/api/public/telegram/webhook/$accountId'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/accounts'
+    | '/_authenticated/bots'
+    | '/_authenticated/brain'
+    | '/_authenticated/clone-bot'
+    | '/_authenticated/cloned-bots'
+    | '/_authenticated/crm'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/dm-flow'
+    | '/_authenticated/inbox'
+    | '/_authenticated/instagram'
+    | '/_authenticated/mini-app'
+    | '/_authenticated/observability'
+    | '/_authenticated/persona'
+    | '/_authenticated/prospecting'
+    | '/_authenticated/queue'
+    | '/_authenticated/remarketing'
+    | '/_authenticated/settings'
+    | '/_authenticated/smm'
+    | '/_authenticated/transactions'
+    | '/_authenticated/wallet'
+    | '/_authenticated/campaigns/new'
+    | '/_authenticated/groups/entered'
+    | '/_authenticated/groups/fill'
+    | '/_authenticated/groups/mining'
+    | '/_authenticated/groups/mirrored'
+    | '/_authenticated/ai/'
+    | '/_authenticated/campaigns/'
+    | '/_authenticated/ai/agents/new'
+    | '/api/public/cron/process-queue'
+    | '/api/public/telegram/webhook/$accountId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ApiPublicCronProcessQueueRoute: typeof ApiPublicCronProcessQueueRoute
+  ApiPublicTelegramWebhookAccountIdRoute: typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +447,305 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/accounts': {
+      id: '/_authenticated/accounts'
+      path: '/accounts'
+      fullPath: '/accounts'
+      preLoaderRoute: typeof AuthenticatedAccountsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bots': {
+      id: '/_authenticated/bots'
+      path: '/bots'
+      fullPath: '/bots'
+      preLoaderRoute: typeof AuthenticatedBotsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/brain': {
+      id: '/_authenticated/brain'
+      path: '/brain'
+      fullPath: '/brain'
+      preLoaderRoute: typeof AuthenticatedBrainRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/clone-bot': {
+      id: '/_authenticated/clone-bot'
+      path: '/clone-bot'
+      fullPath: '/clone-bot'
+      preLoaderRoute: typeof AuthenticatedCloneBotRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cloned-bots': {
+      id: '/_authenticated/cloned-bots'
+      path: '/cloned-bots'
+      fullPath: '/cloned-bots'
+      preLoaderRoute: typeof AuthenticatedClonedBotsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/crm': {
+      id: '/_authenticated/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof AuthenticatedCrmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dm-flow': {
+      id: '/_authenticated/dm-flow'
+      path: '/dm-flow'
+      fullPath: '/dm-flow'
+      preLoaderRoute: typeof AuthenticatedDmFlowRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/inbox': {
+      id: '/_authenticated/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/instagram': {
+      id: '/_authenticated/instagram'
+      path: '/instagram'
+      fullPath: '/instagram'
+      preLoaderRoute: typeof AuthenticatedInstagramRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mini-app': {
+      id: '/_authenticated/mini-app'
+      path: '/mini-app'
+      fullPath: '/mini-app'
+      preLoaderRoute: typeof AuthenticatedMiniAppRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/observability': {
+      id: '/_authenticated/observability'
+      path: '/observability'
+      fullPath: '/observability'
+      preLoaderRoute: typeof AuthenticatedObservabilityRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/persona': {
+      id: '/_authenticated/persona'
+      path: '/persona'
+      fullPath: '/persona'
+      preLoaderRoute: typeof AuthenticatedPersonaRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prospecting': {
+      id: '/_authenticated/prospecting'
+      path: '/prospecting'
+      fullPath: '/prospecting'
+      preLoaderRoute: typeof AuthenticatedProspectingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/queue': {
+      id: '/_authenticated/queue'
+      path: '/queue'
+      fullPath: '/queue'
+      preLoaderRoute: typeof AuthenticatedQueueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/remarketing': {
+      id: '/_authenticated/remarketing'
+      path: '/remarketing'
+      fullPath: '/remarketing'
+      preLoaderRoute: typeof AuthenticatedRemarketingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/settings': {
+      id: '/_authenticated/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/smm': {
+      id: '/_authenticated/smm'
+      path: '/smm'
+      fullPath: '/smm'
+      preLoaderRoute: typeof AuthenticatedSmmRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/transactions': {
+      id: '/_authenticated/transactions'
+      path: '/transactions'
+      fullPath: '/transactions'
+      preLoaderRoute: typeof AuthenticatedTransactionsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wallet': {
+      id: '/_authenticated/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof AuthenticatedWalletRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai/': {
+      id: '/_authenticated/ai/'
+      path: '/ai'
+      fullPath: '/ai/'
+      preLoaderRoute: typeof AuthenticatedAiIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/campaigns/': {
+      id: '/_authenticated/campaigns/'
+      path: '/campaigns'
+      fullPath: '/campaigns/'
+      preLoaderRoute: typeof AuthenticatedCampaignsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/campaigns/new': {
+      id: '/_authenticated/campaigns/new'
+      path: '/campaigns/new'
+      fullPath: '/campaigns/new'
+      preLoaderRoute: typeof AuthenticatedCampaignsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/groups/entered': {
+      id: '/_authenticated/groups/entered'
+      path: '/groups/entered'
+      fullPath: '/groups/entered'
+      preLoaderRoute: typeof AuthenticatedGroupsEnteredRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/groups/fill': {
+      id: '/_authenticated/groups/fill'
+      path: '/groups/fill'
+      fullPath: '/groups/fill'
+      preLoaderRoute: typeof AuthenticatedGroupsFillRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/groups/mining': {
+      id: '/_authenticated/groups/mining'
+      path: '/groups/mining'
+      fullPath: '/groups/mining'
+      preLoaderRoute: typeof AuthenticatedGroupsMiningRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/groups/mirrored': {
+      id: '/_authenticated/groups/mirrored'
+      path: '/groups/mirrored'
+      fullPath: '/groups/mirrored'
+      preLoaderRoute: typeof AuthenticatedGroupsMirroredRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/ai/agents/new': {
+      id: '/_authenticated/ai/agents/new'
+      path: '/ai/agents/new'
+      fullPath: '/ai/agents/new'
+      preLoaderRoute: typeof AuthenticatedAiAgentsNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/cron/process-queue': {
+      id: '/api/public/cron/process-queue'
+      path: '/api/public/cron/process-queue'
+      fullPath: '/api/public/cron/process-queue'
+      preLoaderRoute: typeof ApiPublicCronProcessQueueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/telegram/webhook/$accountId': {
+      id: '/api/public/telegram/webhook/$accountId'
+      path: '/api/public/telegram/webhook/$accountId'
+      fullPath: '/api/public/telegram/webhook/$accountId'
+      preLoaderRoute: typeof ApiPublicTelegramWebhookAccountIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAccountsRoute: typeof AuthenticatedAccountsRoute
+  AuthenticatedBotsRoute: typeof AuthenticatedBotsRoute
+  AuthenticatedBrainRoute: typeof AuthenticatedBrainRoute
+  AuthenticatedCloneBotRoute: typeof AuthenticatedCloneBotRoute
+  AuthenticatedClonedBotsRoute: typeof AuthenticatedClonedBotsRoute
+  AuthenticatedCrmRoute: typeof AuthenticatedCrmRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDmFlowRoute: typeof AuthenticatedDmFlowRoute
+  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedInstagramRoute: typeof AuthenticatedInstagramRoute
+  AuthenticatedMiniAppRoute: typeof AuthenticatedMiniAppRoute
+  AuthenticatedObservabilityRoute: typeof AuthenticatedObservabilityRoute
+  AuthenticatedPersonaRoute: typeof AuthenticatedPersonaRoute
+  AuthenticatedProspectingRoute: typeof AuthenticatedProspectingRoute
+  AuthenticatedQueueRoute: typeof AuthenticatedQueueRoute
+  AuthenticatedRemarketingRoute: typeof AuthenticatedRemarketingRoute
+  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRoute
+  AuthenticatedSmmRoute: typeof AuthenticatedSmmRoute
+  AuthenticatedTransactionsRoute: typeof AuthenticatedTransactionsRoute
+  AuthenticatedWalletRoute: typeof AuthenticatedWalletRoute
+  AuthenticatedCampaignsNewRoute: typeof AuthenticatedCampaignsNewRoute
+  AuthenticatedGroupsEnteredRoute: typeof AuthenticatedGroupsEnteredRoute
+  AuthenticatedGroupsFillRoute: typeof AuthenticatedGroupsFillRoute
+  AuthenticatedGroupsMiningRoute: typeof AuthenticatedGroupsMiningRoute
+  AuthenticatedGroupsMirroredRoute: typeof AuthenticatedGroupsMirroredRoute
+  AuthenticatedAiIndexRoute: typeof AuthenticatedAiIndexRoute
+  AuthenticatedCampaignsIndexRoute: typeof AuthenticatedCampaignsIndexRoute
+  AuthenticatedAiAgentsNewRoute: typeof AuthenticatedAiAgentsNewRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAccountsRoute: AuthenticatedAccountsRoute,
+  AuthenticatedBotsRoute: AuthenticatedBotsRoute,
+  AuthenticatedBrainRoute: AuthenticatedBrainRoute,
+  AuthenticatedCloneBotRoute: AuthenticatedCloneBotRoute,
+  AuthenticatedClonedBotsRoute: AuthenticatedClonedBotsRoute,
+  AuthenticatedCrmRoute: AuthenticatedCrmRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDmFlowRoute: AuthenticatedDmFlowRoute,
+  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
+  AuthenticatedInstagramRoute: AuthenticatedInstagramRoute,
+  AuthenticatedMiniAppRoute: AuthenticatedMiniAppRoute,
+  AuthenticatedObservabilityRoute: AuthenticatedObservabilityRoute,
+  AuthenticatedPersonaRoute: AuthenticatedPersonaRoute,
+  AuthenticatedProspectingRoute: AuthenticatedProspectingRoute,
+  AuthenticatedQueueRoute: AuthenticatedQueueRoute,
+  AuthenticatedRemarketingRoute: AuthenticatedRemarketingRoute,
+  AuthenticatedSettingsRoute: AuthenticatedSettingsRoute,
+  AuthenticatedSmmRoute: AuthenticatedSmmRoute,
+  AuthenticatedTransactionsRoute: AuthenticatedTransactionsRoute,
+  AuthenticatedWalletRoute: AuthenticatedWalletRoute,
+  AuthenticatedCampaignsNewRoute: AuthenticatedCampaignsNewRoute,
+  AuthenticatedGroupsEnteredRoute: AuthenticatedGroupsEnteredRoute,
+  AuthenticatedGroupsFillRoute: AuthenticatedGroupsFillRoute,
+  AuthenticatedGroupsMiningRoute: AuthenticatedGroupsMiningRoute,
+  AuthenticatedGroupsMirroredRoute: AuthenticatedGroupsMirroredRoute,
+  AuthenticatedAiIndexRoute: AuthenticatedAiIndexRoute,
+  AuthenticatedCampaignsIndexRoute: AuthenticatedCampaignsIndexRoute,
+  AuthenticatedAiAgentsNewRoute: AuthenticatedAiAgentsNewRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ApiPublicCronProcessQueueRoute: ApiPublicCronProcessQueueRoute,
+  ApiPublicTelegramWebhookAccountIdRoute:
+    ApiPublicTelegramWebhookAccountIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
