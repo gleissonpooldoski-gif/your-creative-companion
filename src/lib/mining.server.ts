@@ -2,7 +2,9 @@
 // Mining engine: discover -> normalize -> deduplicate -> validate -> classify -> save.
 // Runs inside the PostgreSQL queue worker. Idempotent per mining job.
 
-import { computeGroupScore, normalizeGroupReference } from "@/lib/groups/normalize";
+import { GROUP_CATEGORIES, computeGroupScore, normalizeGroupReference } from "@/lib/groups/normalize";
+
+const GROUP_CATEGORY_VALUES: string[] = GROUP_CATEGORIES.map((item) => item.value);
 import { PROVIDER_NOT_CONFIGURED, getDiscoveryProvider } from "@/lib/providers/group-discovery.server";
 
 type Admin = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
@@ -70,7 +72,7 @@ export async function classifyGroup(input: {
     const parsed = JSON.parse(text) as { category?: string; score?: number; matched_keywords?: string[] };
     const score = Math.max(0, Math.min(100, Math.round(Number(parsed.score ?? 0))));
     return {
-      category: parsed.category ?? null,
+      category: parsed.category && GROUP_CATEGORY_VALUES.includes(parsed.category) ? parsed.category : null,
       score: score > 0 ? score : fallback().score,
       matchedKeywords: Array.isArray(parsed.matched_keywords) ? parsed.matched_keywords.slice(0, 20) : [],
       via: "ai",
