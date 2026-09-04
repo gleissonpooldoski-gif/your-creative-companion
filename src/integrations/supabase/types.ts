@@ -409,22 +409,43 @@ export type Database = {
         Row: {
           authorized: boolean
           campaign_id: string
+          created_at: string
           destination: string
+          group_id: string | null
           id: string
+          last_attempt_at: string | null
+          last_result: string | null
+          scheduled_at: string | null
+          status: string
+          updated_at: string
           workspace_id: string
         }
         Insert: {
           authorized?: boolean
           campaign_id: string
+          created_at?: string
           destination: string
+          group_id?: string | null
           id?: string
+          last_attempt_at?: string | null
+          last_result?: string | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
           workspace_id: string
         }
         Update: {
           authorized?: boolean
           campaign_id?: string
+          created_at?: string
           destination?: string
+          group_id?: string | null
           id?: string
+          last_attempt_at?: string | null
+          last_result?: string | null
+          scheduled_at?: string | null
+          status?: string
+          updated_at?: string
           workspace_id?: string
         }
         Relationships: [
@@ -433,6 +454,13 @@ export type Database = {
             columns: ["campaign_id"]
             isOneToOne: false
             referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "campaign_destinations_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
             referencedColumns: ["id"]
           },
           {
@@ -489,10 +517,12 @@ export type Database = {
       campaigns: {
         Row: {
           created_at: string
+          daily_cap_per_account: number
           failed_count: number
           id: string
           link: string | null
           message: string | null
+          messages_per_hour: number
           name: string
           network: string
           next_run_at: string | null
@@ -504,10 +534,12 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          daily_cap_per_account?: number
           failed_count?: number
           id?: string
           link?: string | null
           message?: string | null
+          messages_per_hour?: number
           name: string
           network?: string
           next_run_at?: string | null
@@ -519,10 +551,12 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          daily_cap_per_account?: number
           failed_count?: number
           id?: string
           link?: string | null
           message?: string | null
+          messages_per_hour?: number
           name?: string
           network?: string
           next_run_at?: string | null
@@ -763,6 +797,65 @@ export type Database = {
           },
         ]
       }
+      group_mining_jobs: {
+        Row: {
+          categories: string[]
+          completed_at: string | null
+          created_at: string
+          error: string | null
+          id: string
+          keywords: string[]
+          started_at: string | null
+          status: string
+          total_duplicate: number
+          total_found: number
+          total_invalid: number
+          total_new: number
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          categories?: string[]
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          keywords?: string[]
+          started_at?: string | null
+          status?: string
+          total_duplicate?: number
+          total_found?: number
+          total_invalid?: number
+          total_new?: number
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          categories?: string[]
+          completed_at?: string | null
+          created_at?: string
+          error?: string | null
+          id?: string
+          keywords?: string[]
+          started_at?: string | null
+          status?: string
+          total_duplicate?: number
+          total_found?: number
+          total_invalid?: number
+          total_new?: number
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_mining_jobs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_mirrors: {
         Row: {
           account_id: string | null
@@ -860,6 +953,96 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "group_sources_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groups: {
+        Row: {
+          canonical_identifier: string
+          category: string | null
+          created_at: string
+          description: string | null
+          first_seen_at: string
+          id: string
+          invite_link: string | null
+          is_public: boolean
+          is_valid: boolean
+          keywords: string[]
+          last_seen_at: string
+          last_validated_at: string | null
+          member_count: number | null
+          mining_job_id: string | null
+          score: number
+          source: string | null
+          status: string
+          telegram_id: string | null
+          title: string
+          updated_at: string
+          username: string | null
+          workspace_id: string
+        }
+        Insert: {
+          canonical_identifier: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          first_seen_at?: string
+          id?: string
+          invite_link?: string | null
+          is_public?: boolean
+          is_valid?: boolean
+          keywords?: string[]
+          last_seen_at?: string
+          last_validated_at?: string | null
+          member_count?: number | null
+          mining_job_id?: string | null
+          score?: number
+          source?: string | null
+          status?: string
+          telegram_id?: string | null
+          title: string
+          updated_at?: string
+          username?: string | null
+          workspace_id: string
+        }
+        Update: {
+          canonical_identifier?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          first_seen_at?: string
+          id?: string
+          invite_link?: string | null
+          is_public?: boolean
+          is_valid?: boolean
+          keywords?: string[]
+          last_seen_at?: string
+          last_validated_at?: string | null
+          member_count?: number | null
+          mining_job_id?: string | null
+          score?: number
+          source?: string | null
+          status?: string
+          telegram_id?: string | null
+          title?: string
+          updated_at?: string
+          username?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "groups_mining_job_id_fkey"
+            columns: ["mining_job_id"]
+            isOneToOne: false
+            referencedRelation: "group_mining_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "groups_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"
@@ -1486,9 +1669,12 @@ export type Database = {
       }
       queue_jobs: {
         Row: {
+          account_id: string | null
           attempts: number
+          campaign_id: string | null
           completed_at: string | null
           created_at: string
+          destination_id: string | null
           error: string | null
           failed_at: string | null
           id: string
@@ -1504,9 +1690,12 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          account_id?: string | null
           attempts?: number
+          campaign_id?: string | null
           completed_at?: string | null
           created_at?: string
+          destination_id?: string | null
           error?: string | null
           failed_at?: string | null
           id?: string
@@ -1522,9 +1711,12 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          account_id?: string | null
           attempts?: number
+          campaign_id?: string | null
           completed_at?: string | null
           created_at?: string
+          destination_id?: string | null
           error?: string | null
           failed_at?: string | null
           id?: string
@@ -1540,6 +1732,27 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "queue_jobs_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_jobs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "queue_jobs_destination_id_fkey"
+            columns: ["destination_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_destinations"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "queue_jobs_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -2083,6 +2296,10 @@ export type Database = {
           messages_per_hour: number
           niche: string | null
           payments_configured: boolean
+          radar_enabled: boolean
+          radar_interval_minutes: number
+          radar_keywords: string[]
+          radar_last_run_at: string | null
           telegram_configured: boolean
           updated_at: string
           workspace_id: string
@@ -2093,6 +2310,10 @@ export type Database = {
           messages_per_hour?: number
           niche?: string | null
           payments_configured?: boolean
+          radar_enabled?: boolean
+          radar_interval_minutes?: number
+          radar_keywords?: string[]
+          radar_last_run_at?: string | null
           telegram_configured?: boolean
           updated_at?: string
           workspace_id: string
@@ -2103,6 +2324,10 @@ export type Database = {
           messages_per_hour?: number
           niche?: string | null
           payments_configured?: boolean
+          radar_enabled?: boolean
+          radar_interval_minutes?: number
+          radar_keywords?: string[]
+          radar_last_run_at?: string | null
           telegram_configured?: boolean
           updated_at?: string
           workspace_id?: string
@@ -2152,9 +2377,12 @@ export type Database = {
       claim_queue_jobs: {
         Args: { _limit?: number }
         Returns: {
+          account_id: string | null
           attempts: number
+          campaign_id: string | null
           completed_at: string | null
           created_at: string
+          destination_id: string | null
           error: string | null
           failed_at: string | null
           id: string

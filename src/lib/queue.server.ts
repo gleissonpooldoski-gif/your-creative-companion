@@ -2,6 +2,9 @@
 // Queue worker. Runs only on the server (cron route). Bounded per run,
 // idempotent progress marking, circuit breaker on AI billing failures.
 
+import { dispatchCampaign, sendCampaignDestination } from "@/lib/campaign-exec.server";
+import { runMiningJob } from "@/lib/mining.server";
+
 const BATCH_SIZE = 10;
 
 type Job = {
@@ -83,6 +86,37 @@ async function handleJob(admin: Admin, job: Job): Promise<{ ok: boolean; message
         }
       }
       return { ok: true, message: `contas verificadas: ${checked}, online: ${online}` };
+    }
+
+    case "group_mining": {
+      const miningJobId = job.payload["mining_job_id"] as string | undefined;
+      if (!miningJobId) return { ok: false, message: "payload sem mining_job_id" };
+      const seeds = job.payload["seed_references"];
+      return runMiningJob(admin, {
+        workspaceId: job.workspace_id,
+        miningJobId,
+        ...(Array.isArray(seeds) ? { seedReferences: seeds as string[] } : {}),
+      });
+    }
+
+    case "run_campaign":
+    case "campaign_dispatch": {
+      const campaignId = job.payload["campaign_id"] as string | undefined;
+      if (!campaignId) return { ok: false, message: "payload sem campaign_id" };
+      return dispatchCampaign(admin, { workspaceId: job.workspace_id, campaignId });
+    }
+
+    case "campaign_send": {
+      const campaignId = job.payload["campaign_id"] as string | undefined;
+      const destinationId = job.payload["destination_id"] as string | undefined;
+      const accountId = job.payload["account_id"] as string | undefined;
+      if (!campaignId || !destinationId || !accountId) return { ok: false, message: "payload incompleto para envio" };
+      return sendCampaignDestination(admin, {
+        workspaceId: job.workspace_id,
+        campaignId,
+        destinationId,
+        accountId,
+      });
     }
 
     case "process_telegram_update": {

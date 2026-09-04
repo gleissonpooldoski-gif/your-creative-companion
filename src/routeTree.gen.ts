@@ -41,6 +41,7 @@ import { Route as AuthenticatedGroupsMiningRouteImport } from './routes/_authent
 import { Route as AuthenticatedGroupsMirroredRouteImport } from './routes/_authenticated/groups.mirrored'
 import { Route as AuthenticatedAiAgentsNewRouteImport } from './routes/_authenticated/ai.agents.new'
 import { Route as ApiPublicCronProcessQueueRouteImport } from './routes/api/public/cron/process-queue'
+import { Route as ApiPublicCronRadarRouteImport } from './routes/api/public/cron/radar'
 import { Route as ApiPublicTelegramWebhookAccountIdRouteImport } from './routes/api/public/telegram/webhook.$accountId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -213,6 +214,11 @@ const ApiPublicCronProcessQueueRoute =
     path: '/api/public/cron/process-queue',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicCronRadarRoute = ApiPublicCronRadarRouteImport.update({
+  id: '/api/public/cron/radar',
+  path: '/api/public/cron/radar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicTelegramWebhookAccountIdRoute =
   ApiPublicTelegramWebhookAccountIdRouteImport.update({
     id: '/api/public/telegram/webhook/$accountId',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/campaigns/': typeof AuthenticatedCampaignsIndexRoute
   '/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
   '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/cron/radar': typeof ApiPublicCronRadarRoute
   '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRoutesByTo {
@@ -286,6 +293,7 @@ export interface FileRoutesByTo {
   '/campaigns': typeof AuthenticatedCampaignsIndexRoute
   '/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
   '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/cron/radar': typeof ApiPublicCronRadarRoute
   '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRoutesById {
@@ -322,6 +330,7 @@ export interface FileRoutesById {
   '/_authenticated/campaigns/': typeof AuthenticatedCampaignsIndexRoute
   '/_authenticated/ai/agents/new': typeof AuthenticatedAiAgentsNewRoute
   '/api/public/cron/process-queue': typeof ApiPublicCronProcessQueueRoute
+  '/api/public/cron/radar': typeof ApiPublicCronRadarRoute
   '/api/public/telegram/webhook/$accountId': typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 export interface FileRouteTypes {
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/campaigns/'
     | '/ai/agents/new'
     | '/api/public/cron/process-queue'
+    | '/api/public/cron/radar'
     | '/api/public/telegram/webhook/$accountId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -392,6 +402,7 @@ export interface FileRouteTypes {
     | '/campaigns'
     | '/ai/agents/new'
     | '/api/public/cron/process-queue'
+    | '/api/public/cron/radar'
     | '/api/public/telegram/webhook/$accountId'
   id:
     | '__root__'
@@ -427,6 +438,7 @@ export interface FileRouteTypes {
     | '/_authenticated/campaigns/'
     | '/_authenticated/ai/agents/new'
     | '/api/public/cron/process-queue'
+    | '/api/public/cron/radar'
     | '/api/public/telegram/webhook/$accountId'
   fileRoutesById: FileRoutesById
 }
@@ -435,6 +447,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiPublicCronProcessQueueRoute: typeof ApiPublicCronProcessQueueRoute
+  ApiPublicCronRadarRoute: typeof ApiPublicCronRadarRoute
   ApiPublicTelegramWebhookAccountIdRoute: typeof ApiPublicTelegramWebhookAccountIdRoute
 }
 
@@ -664,6 +677,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicCronProcessQueueRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/cron/radar': {
+      id: '/api/public/cron/radar'
+      path: '/api/public/cron/radar'
+      fullPath: '/api/public/cron/radar'
+      preLoaderRoute: typeof ApiPublicCronRadarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook/$accountId': {
       id: '/api/public/telegram/webhook/$accountId'
       path: '/api/public/telegram/webhook/$accountId'
@@ -744,6 +764,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiPublicCronProcessQueueRoute: ApiPublicCronProcessQueueRoute,
+  ApiPublicCronRadarRoute: ApiPublicCronRadarRoute,
   ApiPublicTelegramWebhookAccountIdRoute:
     ApiPublicTelegramWebhookAccountIdRoute,
 }

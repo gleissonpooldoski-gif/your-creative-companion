@@ -10,34 +10,43 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { PageHeader } from "@/components/app/primitives";
+import { PageHeader, StatusBadge, formatNumber } from "@/components/app/primitives";
 import { PendingIntegration } from "@/components/app/states";
-import { createResource, listResource } from "@/lib/data.functions";
+import { createResource } from "@/lib/data.functions";
 import { generateVariations } from "@/lib/ai.functions";
+import { createCampaignFromGroups, listCampaignAccounts } from "@/lib/campaigns.functions";
+import { listGroups } from "@/lib/mining.functions";
+import { categoryLabel } from "@/lib/groups/normalize";
 import { pageHead } from "@/lib/head";
 
 export const Route = createFileRoute("/_authenticated/campaigns/new")({
   head: () =>
-    pageHead("Nova campanha", "Assistente de criação de campanha com variações geradas por IA e contas reais."),
+    pageHead("Nova campanha", "Assistente de campanha com grupos minerados, contas reais e execução pela fila."),
   component: NewCampaign,
 });
 
 function NewCampaign() {
   const navigate = useNavigate();
-  const list = useServerFn(listResource);
-  const create = useServerFn(createResource);
+  const accountsFn = useServerFn(listCampaignAccounts);
+  const groupsFn = useServerFn(listGroups);
+  const create = useServerFn(createCampaignFromGroups);
+  const createRow = useServerFn(createResource);
   const variationsFn = useServerFn(generateVariations);
 
   const [name, setName] = useState("");
-  const [objective, setObjective] = useState("dm");
+  const [network, setNetwork] = useState("group");
   const [baseMessage, setBaseMessage] = useState("");
+  const [link, setLink] = useState("");
   const [variations, setVariations] = useState<string[]>([]);
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
-  const [destinations, setDestinations] = useState("");
+  const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [messagesPerHour, setMessagesPerHour] = useState("30");
+  const [dailyCap, setDailyCap] = useState("50");
 
-  const accounts = useQuery({
-    queryKey: ["resource", "telegram_accounts", "campaign-wizard"],
-    queryFn: () => list({ data: { table: "telegram_accounts", limit: 50 } }),
+  const accounts = useQuery({ queryKey: ["campaign-accounts"], queryFn: () => accountsFn() });
+  const groups = useQuery({
+    queryKey: ["campaign-groups"],
+    queryFn: () => groupsFn({ data: { onlyValid: true, limit: 100 } }),
   });
 
   const generate = useMutation({
@@ -53,42 +62,44 @@ function NewCampaign() {
     mutationFn: async () => {
       if (!name.trim()) throw new Error("Informe o nome da campanha.");
       if (!baseMessage.trim()) throw new Error("Informe a mensagem base.");
-      const campaign: any = await create({
-        data: { table: "campaigns", values: { name, objective, status: "draft", notes: baseMessage } },
+      const result: any = await create({
+        data: {
+          name: name.trim(),
+          message: baseMessage.trim(),
+          network,
+          ...(link.trim() ? { link: link.trim() } : {}),
+          messagesPerHour: Number(messagesPerHour) || 30,
+          dailyCapPerAccount: Number(dailyCap) || 50,
+          groupIds: selectedGroups,
+          accountIds: selectedAccounts,
+        },
       });
-      const campaignId = campaign.row.id;
-
-      const allVariations = [baseMessage, ...variations];
-      for (const [index, content] of allVariations.entries()) {
-        await create({
-          data: { table: "campaign_variations", values: { campaign_id: campaignId, content, position: index } },
+      for (const [index, content] of variations.entries()) {
+        await createRow({
+          data: {
+            table: "campaign_variations",
+            values: { campaign_id: result.campaignId, content, generated_by: "ai", approved: index === 0 },
+          },
         });
       }
-      for (const accountId of selectedAccounts) {
-        await create({ data: { table: "campaign_accounts", values: { campaign_id: campaignId, account_id: accountId } } });
-      }
-      const targets = destinations
-        .split("\n")
-        .map((value) => value.trim())
-        .filter(Boolean);
-      for (const target of targets) {
-        await create({ data: { table: "campaign_destinations", values: { campaign_id: campaignId, target } } });
-      }
-      return campaignId as string;
+      return result;
     },
-    onSuccess: () => {
-      toast.success("Campanha criada como rascunho.");
+    onSuccess: (result: any) => {
+      toast.success(`Campanha criada como rascunho com ${result.destinations} destino(s).`);
       navigate({ to: "/campaigns" });
     },
     onError: (error: Error) => toast.error(error.message),
   });
+
+  const accountRows: any[] = accounts.data?.accounts ?? [];
+  const groupRows: any[] = groups.data?.rows ?? [];
 
   return (
     <div className="space-y-6">
       <PageHeader
         breadcrumb="Campanhas"
         title="Nova campanha"
-        description="Monte a campanha com mensagem base, variações reais geradas por IA, contas conectadas e destinos autorizados."
+        description="Selecione grupos minerados e validados, escolha contas online e defina o ritmo. A execução ocorre pela fila com confirmação do provedor."
       />
 
       <PendingIntegration
@@ -103,12 +114,32 @@ function NewCampaign() {
             <Input id="campaign-name" value={name} onChange={(event) => setName(event.target.value)} />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="campaign-objective">Objetivo</Label>
+            <Label htmlFor="campaign-network">Canal</Label>
             <Input
-              id="campaign-objective"
-              value={objective}
-              onChange={(event) => setObjective(event.target.value)}
-              placeholder="dm | group | mixed"
+              id="campaign-network"
+              value={network}
+              onChange={(event) => setNetwork(event.target.value)}
+              placeholder="group | dm | mixed"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="campaign-pace">Mensagens por hora</Label>
+            <Input
+              id="campaign-pace"
+              type="number"
+              min={1}
+              value={messagesPerHour}
+              onChange={(event) => setMessagesPerHour(event.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="campaign-cap">Limite diário por conta</Label>
+            <Input
+              id="campaign-cap"
+              type="number"
+              min={1}
+              value={dailyCap}
+              onChange={(event) => setDailyCap(event.target.value)}
             />
           </div>
         </div>
@@ -121,6 +152,7 @@ function NewCampaign() {
             value={baseMessage}
             onChange={(event) => setBaseMessage(event.target.value)}
           />
+          <Input placeholder="Link (opcional)" value={link} onChange={(event) => setLink(event.target.value)} />
           <Button
             size="sm"
             variant="secondary"
@@ -149,10 +181,10 @@ function NewCampaign() {
 
         <div className="space-y-2">
           <p className="text-sm font-semibold">Contas de envio</p>
-          {(accounts.data?.rows ?? []).length === 0 ? (
+          {accountRows.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nenhuma conta conectada. Conecte um bot em Contas.</p>
           ) : (
-            (accounts.data?.rows ?? []).map((account: any) => (
+            accountRows.map((account) => (
               <label key={account.id} className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={selectedAccounts.includes(account.id)}
@@ -162,21 +194,38 @@ function NewCampaign() {
                     )
                   }
                 />
-                {account.name} — {account.status}
+                {account.name} <StatusBadge status={account.status} />
               </label>
             ))
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="campaign-destinations">Destinos autorizados (um por linha)</Label>
-          <Textarea
-            id="campaign-destinations"
-            rows={4}
-            value={destinations}
-            onChange={(event) => setDestinations(event.target.value)}
-            placeholder={"@grupo_publico\n-1001234567890"}
-          />
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">Grupos minerados validados ({groupRows.length})</p>
+          {groupRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              Nenhum grupo validado. Rode a Mineração de Grupos para popular a base.
+            </p>
+          ) : (
+            <div className="max-h-64 space-y-1 overflow-y-auto">
+              {groupRows.map((group) => (
+                <label key={group.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={selectedGroups.includes(group.id)}
+                    onCheckedChange={(checked) =>
+                      setSelectedGroups((prev) =>
+                        checked ? [...prev, group.id] : prev.filter((id) => id !== group.id),
+                      )
+                    }
+                  />
+                  <span className="font-medium">{group.title ?? group.canonical_identifier}</span>
+                  <span className="text-xs text-muted-foreground">
+                    {categoryLabel(group.category)} · {formatNumber(group.member_count)} membros · score {group.score}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         <Button disabled={save.isPending} onClick={() => save.mutate()}>

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ResourcePage } from "@/components/app/ResourcePage";
 import { StatusBadge, formatDateTime } from "@/components/app/primitives";
-import { enqueueJob, updateResource } from "@/lib/data.functions";
+import { setCampaignPaused, startCampaign } from "@/lib/campaigns.functions";
 import { pageHead } from "@/lib/head";
 
 export const Route = createFileRoute("/_authenticated/campaigns/")({
@@ -16,26 +16,26 @@ export const Route = createFileRoute("/_authenticated/campaigns/")({
 });
 
 function CampaignsPage() {
-  const update = useServerFn(updateResource);
-  const enqueue = useServerFn(enqueueJob);
+  const startFn = useServerFn(startCampaign);
+  const pauseFn = useServerFn(setCampaignPaused);
   const queryClient = useQueryClient();
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["resource", "campaigns"] });
 
   const statusMutation = useMutation({
-    mutationFn: (input: { id: string; status: string }) =>
-      update({ data: { table: "campaigns", id: input.id, values: { status: input.status } } }),
-    onSuccess: async () => {
-      toast.success("Status da campanha atualizado.");
+    mutationFn: (input: { id: string; paused: boolean }) =>
+      pauseFn({ data: { campaignId: input.id, paused: input.paused } }),
+    onSuccess: async (result: any) => {
+      toast.success(result.status === "paused" ? "Campanha pausada. Jobs pendentes cancelados." : "Campanha retomada.");
       await invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
   });
 
   const runMutation = useMutation({
-    mutationFn: (id: string) => enqueue({ data: { kind: "run_campaign", payload: { campaign_id: id } } }),
-    onSuccess: async () => {
-      toast.success("Campanha enfileirada para execução.");
+    mutationFn: (id: string) => startFn({ data: { campaignId: id } }),
+    onSuccess: async (result: any) => {
+      toast.success(`Campanha iniciada: ${result.destinations} destino(s), ${result.accounts} conta(s) online.`);
       await invalidate();
     },
     onError: (error: Error) => toast.error(error.message),
@@ -84,14 +84,14 @@ function CampaignsPage() {
       rowActions={(row: any) => (
         <>
           <Button size="sm" variant="ghost" disabled={runMutation.isPending} onClick={() => runMutation.mutate(row.id)}>
-            Executar
+            Iniciar
           </Button>
           <Button
             size="sm"
             variant="ghost"
             disabled={statusMutation.isPending}
             onClick={() =>
-              statusMutation.mutate({ id: row.id, status: row.status === "paused" ? "scheduled" : "paused" })
+              statusMutation.mutate({ id: row.id, paused: row.status !== "paused" })
             }
           >
             {row.status === "paused" ? "Retomar" : "Pausar"}
