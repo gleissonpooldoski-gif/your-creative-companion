@@ -30,3 +30,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Worker service env
+services/mtproto-worker/.env
+services/mtproto-worker/sessions/
