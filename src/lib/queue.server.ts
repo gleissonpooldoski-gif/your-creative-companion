@@ -37,6 +37,20 @@ async function isWorkspacePaused(admin: Admin, workspaceId: string): Promise<boo
   return Boolean(data?.global_pause);
 }
 
+async function syncMiningFailure(admin: Admin, job: Job, message: string, terminal: boolean) {
+  if (job.kind !== "group_mining") return;
+  const miningJobId = job.payload["mining_job_id"];
+  if (typeof miningJobId !== "string") return;
+  await admin.from("group_mining_jobs").update({
+    status: terminal ? "failed" : "pending",
+    progress_stage: terminal ? "failed" : "retry",
+    progress_message: terminal ? "Falhou após todas as tentativas" : `Nova tentativa agendada (${job.attempts}/${job.max_attempts})`,
+    attempt_count: job.attempts,
+    error: message.slice(0, 1000),
+    ...(terminal ? { completed_at: new Date().toISOString() } : {}),
+  }).eq("id", miningJobId).eq("workspace_id", job.workspace_id);
+}
+
 async function handleJob(admin: Admin, job: Job): Promise<{ ok: boolean; message: string }> {
   switch (job.kind) {
     case "sync_accounts": {
@@ -297,6 +311,7 @@ export async function processQueue(): Promise<{
           .update({ status: "failed", failed_at: new Date().toISOString(), error: result.message, locked_at: null })
           .eq("id", job.id);
         await log(admin, job, "error", result.message);
+        await syncMiningFailure(admin, job, result.message, true);
         await admin.from("notifications").insert({
           workspace_id: job.workspace_id,
           kind: "job",
@@ -315,6 +330,7 @@ export async function processQueue(): Promise<{
           })
           .eq("id", job.id);
         await log(admin, job, "warn", result.message);
+        await syncMiningFailure(admin, job, result.message, false);
         requeued += 1;
       }
     } catch (error) {
@@ -331,6 +347,7 @@ export async function processQueue(): Promise<{
         })
         .eq("id", job.id);
       await log(admin, job, "error", message);
+      await syncMiningFailure(admin, job, message, terminal);
       if (terminal) failed += 1;
       else requeued += 1;
     }

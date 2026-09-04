@@ -97,27 +97,43 @@ export async function runMiningJob(
     .eq("workspace_id", input.workspaceId)
     .maybeSingle();
   if (!job) return { ok: false, message: "job de mineração não encontrado" };
-  if (job.status === "completed") return { ok: true, message: "mineração já concluída (idempotente)" };
+  if (job.status === "completed" || job.status === "completed_with_errors") {
+    return { ok: true, message: "mineração já concluída (idempotente)" };
+  }
   if (job.status === "cancelled") return { ok: true, message: "mineração cancelada" };
 
   await admin
     .from("group_mining_jobs")
-    .update({ status: "processing", started_at: job.started_at ?? new Date().toISOString(), error: null })
+    .update({
+      status: "processing",
+      started_at: job.started_at ?? new Date().toISOString(),
+      error: null,
+      progress_stage: "discovering",
+      progress_message: `Buscando grupos para “${(job.keywords ?? []).join(", ")}”...`,
+      attempt_count: Number(job.attempt_count ?? 0) + 1,
+    })
     .eq("id", job.id);
 
   const keywords: string[] = job.keywords ?? [];
   const categories: string[] = job.categories ?? [];
-  const provider = getDiscoveryProvider({
+  const provider = await getDiscoveryProvider({
     keywords,
     categories,
     limit: MAX_PER_RUN,
     ...(input.seedReferences ? { seedReferences: input.seedReferences } : {}),
-  });
+  }, input.workspaceId);
 
   if (!provider) {
     await admin
       .from("group_mining_jobs")
-      .update({ status: "failed", error: PROVIDER_NOT_CONFIGURED, completed_at: new Date().toISOString() })
+      .update({
+        status: "failed",
+        provider: "not_configured",
+        progress_stage: "failed",
+        progress_message: "Aguardando configuração do provider",
+        error: PROVIDER_NOT_CONFIGURED,
+        completed_at: new Date().toISOString(),
+      })
       .eq("id", job.id);
     return { ok: true, message: PROVIDER_NOT_CONFIGURED };
   }
@@ -137,9 +153,23 @@ export async function runMiningJob(
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "falha no provider de descoberta";
-    await admin.from("group_mining_jobs").update({ status: "failed", error: message }).eq("id", job.id);
+    await admin.from("group_mining_jobs").update({
+      status: "failed",
+      provider: provider.name,
+      progress_stage: "failed",
+      progress_message: "Falha na descoberta",
+      error: message.slice(0, 1000),
+      completed_at: new Date().toISOString(),
+    }).eq("id", job.id);
     return { ok: false, message };
   }
+
+  await admin.from("group_mining_jobs").update({
+    provider: provider.name,
+    total_found: discovered.length,
+    progress_stage: "validating",
+    progress_message: `Validando 0/${discovered.length}`,
+  }).eq("id", job.id);
 
   const seenThisRun = new Set<string>();
 
@@ -147,6 +177,7 @@ export async function runMiningJob(
     const normalized = normalizeGroupReference(candidate.reference);
     if (!normalized) {
       invalid += 1;
+      await admin.from("group_mining_jobs").update({ total_invalid: invalid }).eq("id", job.id);
       continue;
     }
     if (seenThisRun.has(normalized.canonicalIdentifier)) continue;
@@ -191,6 +222,14 @@ export async function runMiningJob(
         .eq("id", existing.id);
       if (!validation.valid) invalid += 1;
       await audit(admin, input.workspaceId, "group_validated", `groups:${existing.id}`, validation.valid ? "valid" : validation.code ?? "invalid");
+      await admin.from("group_mining_jobs").update({
+        processed_count: found,
+        total_found: discovered.length,
+        total_new: created,
+        total_duplicate: duplicate,
+        total_invalid: invalid,
+        progress_message: `Validando ${found}/${discovered.length}`,
+      }).eq("id", job.id);
       continue;
     }
 
@@ -226,18 +265,28 @@ export async function runMiningJob(
     if (!validation.valid) invalid += 1;
     created += 1;
     await audit(admin, input.workspaceId, "group_discovered", `groups:${inserted?.id}`, candidate.source);
+    await admin.from("group_mining_jobs").update({
+      processed_count: found,
+      total_found: discovered.length,
+      total_new: created,
+      total_duplicate: duplicate,
+      total_invalid: invalid,
+      progress_message: `Validando ${found}/${discovered.length}`,
+    }).eq("id", job.id);
   }
 
   await admin
     .from("group_mining_jobs")
     .update({
-      status: "completed",
+      status: invalid > 0 ? "completed_with_errors" : "completed",
       total_found: found,
       total_new: created,
       total_duplicate: duplicate,
       total_invalid: invalid,
       completed_at: new Date().toISOString(),
       error: null,
+      progress_stage: "completed",
+      progress_message: invalid > 0 ? "Concluído com referências inválidas" : "Concluído",
     })
     .eq("id", job.id);
 

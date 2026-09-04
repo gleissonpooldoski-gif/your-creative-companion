@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMemo, useState } from "react";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -54,6 +54,7 @@ function MiningPage() {
   const [keywords, setKeywords] = useState("");
   const [category, setCategory] = useState<string>("todas");
   const [seeds, setSeeds] = useState("");
+  const [importName, setImportName] = useState<string | null>(null);
   const [selected, setSelected] = useState<string[]>([]);
   const [campaignName, setCampaignName] = useState("");
   const [campaignMessage, setCampaignMessage] = useState("");
@@ -151,6 +152,26 @@ function MiningPage() {
     [statusQuery.data],
   );
 
+  const readImportFile = async (file: File | undefined) => {
+    if (!file) return;
+    if (!/\.(txt|csv)$/i.test(file.name)) {
+      toast.error("Selecione um arquivo TXT ou CSV.");
+      return;
+    }
+    if (file.size > 1_000_000) {
+      toast.error("O arquivo deve ter no máximo 1 MB.");
+      return;
+    }
+    const text = await file.text();
+    const references = text
+      .split(/[\r\n,;]+/)
+      .map((value) => value.trim().replace(/^['"]|['"]$/g, ""))
+      .filter(Boolean);
+    setSeeds(references.join("\n"));
+    setImportName(file.name);
+    toast.success(`${references.length} linha(s) carregada(s) para validação.`);
+  };
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -162,7 +183,7 @@ function MiningPage() {
       {statusQuery.data && !statusQuery.data.providerConfigured ? (
         <PendingIntegration
           title="Provider de descoberta não configurado"
-          detail={`Sem provider a descoberta automática não roda. Configure ${statusQuery.data.missingProviderEnv.join(" e ")} ou informe referências públicas manualmente no campo de importação abaixo.`}
+          detail="Sem provider a descoberta automática não roda. Configure a integração ou importe referências públicas por TXT/CSV."
         />
       ) : null}
 
@@ -211,11 +232,24 @@ function MiningPage() {
               onChange={(event) => setSeeds(event.target.value)}
               placeholder={"https://t.me/grupo_publico\n@outro_grupo"}
             />
+            <div className="flex flex-wrap items-center gap-2">
+              <Input
+                className="max-w-sm"
+                type="file"
+                accept=".txt,.csv,text/plain,text/csv"
+                aria-label="Importar arquivo TXT ou CSV"
+                onChange={(event) => void readImportFile(event.target.files?.[0])}
+              />
+              {importName ? <span className="text-xs text-muted-foreground">{importName}</span> : null}
+            </div>
           </div>
         </div>
+        <div className="flex flex-wrap gap-2">
         <Button disabled={mine.isPending} onClick={() => mine.mutate()}>
           {mine.isPending ? "Enfileirando..." : "Minerar agora"}
         </Button>
+        {!statusQuery.data?.providerConfigured ? <Button variant="secondary" asChild><Link to="/settings">Configurar provider</Link></Button> : null}
+        </div>
       </div>
 
       <div className="panel space-y-2 p-4">
@@ -233,8 +267,10 @@ function MiningPage() {
                   <th className="py-2">Novos</th>
                   <th className="py-2">Duplicados</th>
                   <th className="py-2">Inválidos</th>
+                  <th className="py-2">Provider</th>
+                  <th className="py-2">Tentativas</th>
                   <th className="py-2">Criado</th>
-                  <th className="py-2">Erro</th>
+                  <th className="py-2">Diagnóstico</th>
                 </tr>
               </thead>
               <tbody>
@@ -248,8 +284,13 @@ function MiningPage() {
                     <td className="py-2">{job.total_new ?? 0}</td>
                     <td className="py-2">{job.total_duplicate ?? 0}</td>
                     <td className="py-2">{job.total_invalid ?? 0}</td>
+                    <td className="py-2">{job.provider ?? "—"}</td>
+                    <td className="py-2">{job.attempt_count ?? 0}</td>
                     <td className="py-2">{formatDateTime(job.created_at)}</td>
-                    <td className="py-2 text-destructive">{job.error ?? ""}</td>
+                    <td className={job.error ? "py-2 text-destructive" : "py-2 text-muted-foreground"}>
+                      {job.error ?? job.progress_message ?? job.progress_stage ?? "—"}
+                      {job.status === "processing" && job.total_found > 0 ? ` (${job.processed_count ?? 0}/${job.total_found})` : ""}
+                    </td>
                   </tr>
                 ))}
               </tbody>

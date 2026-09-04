@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 
@@ -13,6 +13,7 @@ import { ErrorState, LoadingSkeleton } from "@/components/app/states";
 import { PageHeader, StatusBadge } from "@/components/app/primitives";
 import { useWorkspace } from "@/hooks/use-workspace";
 import { completeOnboarding, saveSettings, setGlobalPause } from "@/lib/data.functions";
+import { getDirectoryProviderStatus, saveDirectoryProvider, testDirectoryProvider } from "@/lib/provider-config.functions";
 import { pageHead } from "@/lib/head";
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -26,10 +27,26 @@ function SettingsPage() {
   const save = useServerFn(saveSettings);
   const pause = useServerFn(setGlobalPause);
   const finishOnboarding = useServerFn(completeOnboarding);
+  const getProviderStatus = useServerFn(getDirectoryProviderStatus);
+  const saveProvider = useServerFn(saveDirectoryProvider);
+  const testProvider = useServerFn(testDirectoryProvider);
 
   const [messagesPerHour, setMessagesPerHour] = useState("");
   const [dailyCap, setDailyCap] = useState("");
   const [niche, setNiche] = useState("");
+  const [providerUrl, setProviderUrl] = useState("");
+  const [providerKey, setProviderKey] = useState("");
+
+  const canConfigureProvider = ["owner", "admin"].includes(workspace.data?.role ?? "");
+  const providerQuery = useQuery({
+    queryKey: ["directory-provider-status"],
+    queryFn: () => getProviderStatus(),
+    enabled: canConfigureProvider,
+  });
+
+  useEffect(() => {
+    if (providerQuery.data?.api_url) setProviderUrl(providerQuery.data.api_url);
+  }, [providerQuery.data?.api_url]);
 
   useEffect(() => {
     const settings = workspace.data?.settings;
@@ -68,6 +85,25 @@ function SettingsPage() {
     onSuccess: async () => {
       toast.success("Onboarding concluído.");
       await queryClient.invalidateQueries({ queryKey: ["workspace-context"] });
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const providerSaveMutation = useMutation({
+    mutationFn: () => saveProvider({ data: { apiUrl: providerUrl.trim(), apiKey: providerKey } }),
+    onSuccess: async () => {
+      setProviderKey("");
+      toast.success("Provider salvo com a credencial protegida.");
+      await providerQuery.refetch();
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+
+  const providerTestMutation = useMutation({
+    mutationFn: () => testProvider(),
+    onSuccess: async (result) => {
+      toast[result.ok ? "success" : "error"](result.message);
+      await providerQuery.refetch();
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -119,6 +155,43 @@ function SettingsPage() {
             Com a pausa ativa, nenhum job é processado; a fila é preservada e retomada ao desativar.
           </span>
         </div>
+      </section>
+
+      <section className="panel space-y-4 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold">Provider de descoberta de grupos</h2>
+            <p className="mt-1 text-xs text-muted-foreground">A credencial fica protegida e nunca é exibida novamente.</p>
+          </div>
+          <StatusBadge status={providerQuery.data?.status ?? "not_configured"} />
+        </div>
+        {canConfigureProvider ? (
+          <>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="provider-url">URL HTTPS</Label>
+                <Input id="provider-url" type="url" value={providerUrl} onChange={(event) => setProviderUrl(event.target.value)} placeholder="https://api.exemplo.com/groups/search" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="provider-key">API Key</Label>
+                <Input id="provider-key" type="password" autoComplete="new-password" value={providerKey} onChange={(event) => setProviderKey(event.target.value)} placeholder={providerQuery.data?.configured ? "Informe para substituir" : "Credencial do provider"} />
+              </div>
+            </div>
+            {providerQuery.data?.last_test_message ? (
+              <p className="text-xs text-muted-foreground">Último teste: {providerQuery.data.last_test_message}</p>
+            ) : null}
+            <div className="flex flex-wrap gap-2">
+              <Button disabled={providerSaveMutation.isPending || !providerUrl.trim() || !providerKey} onClick={() => providerSaveMutation.mutate()}>
+                {providerSaveMutation.isPending ? "Salvando..." : "Salvar provider"}
+              </Button>
+              <Button variant="secondary" disabled={providerTestMutation.isPending || !providerQuery.data?.configured} onClick={() => providerTestMutation.mutate()}>
+                {providerTestMutation.isPending ? "Testando..." : "Testar conexão"}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">Somente proprietários e administradores podem alterar esta integração.</p>
+        )}
       </section>
 
       <section className="panel space-y-3 p-4">

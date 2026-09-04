@@ -183,6 +183,16 @@ export const startCampaign = createServerFn({ method: "POST" })
     );
     if (usable.length === 0) throw new Error("Nenhuma conta Telegram autorizada e online vinculada à campanha.");
 
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const usableIds = usable.map((link: any) => link.telegram_accounts.id);
+    const { data: credentials } = await supabaseAdmin
+      .from("telegram_credentials")
+      .select("account_id")
+      .eq("workspace_id", workspaceId)
+      .in("account_id", usableIds)
+      .not("bot_token", "is", null);
+    if (!credentials?.length) throw new Error("Nenhuma conta vinculada possui provider de envio configurado.");
+
     await supabase.from("campaigns").update({ status: "running" }).eq("id", campaign.id).eq("workspace_id", workspaceId);
     const { error } = await supabase.from("queue_jobs").insert({
       workspace_id: workspaceId,
