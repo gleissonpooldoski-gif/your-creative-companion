@@ -704,6 +704,53 @@ export type Database = {
           },
         ]
       }
+      group_discovery_provider_configs: {
+        Row: {
+          api_key_ciphertext: string
+          api_url: string
+          created_at: string
+          created_by: string | null
+          last_test_message: string | null
+          last_tested_at: string | null
+          provider_type: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          api_key_ciphertext: string
+          api_url: string
+          created_at?: string
+          created_by?: string | null
+          last_test_message?: string | null
+          last_tested_at?: string | null
+          provider_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          api_key_ciphertext?: string
+          api_url?: string
+          created_at?: string
+          created_by?: string | null
+          last_test_message?: string | null
+          last_tested_at?: string | null
+          provider_type?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_discovery_provider_configs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_keywords: {
         Row: {
           category: string | null
@@ -799,12 +846,18 @@ export type Database = {
       }
       group_mining_jobs: {
         Row: {
+          attempt_count: number
           categories: string[]
           completed_at: string | null
           created_at: string
+          created_by: string | null
           error: string | null
           id: string
           keywords: string[]
+          processed_count: number
+          progress_message: string | null
+          progress_stage: string
+          provider: string | null
           started_at: string | null
           status: string
           total_duplicate: number
@@ -815,12 +868,18 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          attempt_count?: number
           categories?: string[]
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           error?: string | null
           id?: string
           keywords?: string[]
+          processed_count?: number
+          progress_message?: string | null
+          progress_stage?: string
+          provider?: string | null
           started_at?: string | null
           status?: string
           total_duplicate?: number
@@ -831,12 +890,18 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          attempt_count?: number
           categories?: string[]
           completed_at?: string | null
           created_at?: string
+          created_by?: string | null
           error?: string | null
           id?: string
           keywords?: string[]
+          processed_count?: number
+          progress_message?: string | null
+          progress_stage?: string
+          provider?: string | null
           started_at?: string | null
           status?: string
           total_duplicate?: number
