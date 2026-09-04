@@ -107,12 +107,12 @@ export async function runMiningJob(
 
   const keywords: string[] = job.keywords ?? [];
   const categories: string[] = job.categories ?? [];
-  const provider = getDiscoveryProvider({
+  const provider = await getDiscoveryProvider({
     keywords,
     categories,
     limit: MAX_PER_RUN,
     ...(input.seedReferences ? { seedReferences: input.seedReferences } : {}),
-  });
+  }, input.workspaceId);
 
   if (!provider) {
     await admin

@@ -3,6 +3,7 @@
 // validation reads the public t.me preview page of a public group.
 
 import { normalizeGroupReference } from "@/lib/groups/normalize";
+import { loadProviderConfig } from "@/lib/provider-config.server";
 
 export type DiscoveryInput = {
   keywords: string[];
@@ -14,10 +15,14 @@ export type DiscoveryInput = {
 
 export type GroupDiscoveryResult = {
   reference: string;
+  externalId?: string | null;
+  username?: string | null;
+  publicLink?: string | null;
   title?: string | null;
   description?: string | null;
   memberCount?: number | null;
   source: string;
+  discoveredAt?: string | null;
 };
 
 export type GroupValidationResult = {
@@ -38,6 +43,13 @@ export interface GroupDiscoveryProvider {
 }
 
 export const PROVIDER_NOT_CONFIGURED = "Nenhum provider de descoberta configurado.";
+const DIRECTORY_TIMEOUT_MS = 20_000;
+
+export type ProviderConnectionResult = {
+  ok: boolean;
+  code: "CONNECTED" | "NOT_CONFIGURED" | "INVALID_URL" | "INVALID_KEY" | "TIMEOUT" | "EXTERNAL_ERROR";
+  message: string;
+};
 
 function decodeEntities(value: string): string {
   return value
@@ -139,31 +151,61 @@ class DirectoryDiscoveryProvider implements GroupDiscoveryProvider {
     return Boolean(this.url && this.key);
   }
   async discoverGroups(input: DiscoveryInput): Promise<GroupDiscoveryResult[]> {
-    const response = await fetch(this.url, {
-      method: "POST",
-      headers: { authorization: `Bearer ${this.key}`, "content-type": "application/json" },
-      body: JSON.stringify({ keywords: input.keywords, categories: input.categories, limit: input.limit }),
-    });
-    if (!response.ok) {
-      throw new Error(`Provider de descoberta respondeu HTTP ${response.status}`);
-    }
-    const payload = (await response.json()) as {
-      results?: Array<{ reference?: string; link?: string; username?: string; title?: string; description?: string; member_count?: number }>;
-    };
-    const out: GroupDiscoveryResult[] = [];
-    for (const item of payload.results ?? []) {
-      const reference = item.reference ?? item.link ?? item.username ?? "";
-      if (!reference) continue;
-      out.push({
-        reference,
-        title: item.title ?? null,
-        description: item.description ?? null,
-        memberCount: item.member_count ?? null,
-        source: this.name,
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), DIRECTORY_TIMEOUT_MS);
+    try {
+      const response = await fetch(this.url, {
+        method: "POST",
+        headers: { authorization: `Bearer ${this.key}`, "content-type": "application/json" },
+        body: JSON.stringify({ keywords: input.keywords, categories: input.categories, limit: input.limit }),
+        signal: controller.signal,
       });
+      if (response.status === 401 || response.status === 403) throw new Error("API Key inválida.");
+      if (!response.ok) throw new Error(`Provider externo respondeu HTTP ${response.status}.`);
+      const payload = (await response.json()) as {
+        results?: Array<{
+          externalId?: string;
+          external_id?: string;
+          reference?: string;
+          publicLink?: string;
+          public_link?: string;
+          link?: string;
+          username?: string;
+          title?: string;
+          description?: string;
+          memberCount?: number;
+          member_count?: number;
+          discoveredAt?: string;
+          discovered_at?: string;
+        }>;
+      };
+      if (!Array.isArray(payload.results)) throw new Error("Resposta do provider fora do formato esperado.");
+      const out: GroupDiscoveryResult[] = [];
+      for (const item of payload.results) {
+        const reference = item.reference ?? item.publicLink ?? item.public_link ?? item.link ?? item.username ?? "";
+        if (!reference) continue;
+        const normalized = normalizeGroupReference(reference);
+        out.push({
+          reference,
+          externalId: item.externalId ?? item.external_id ?? null,
+          username: item.username ?? normalized?.username ?? null,
+          publicLink: item.publicLink ?? item.public_link ?? item.link ?? normalized?.inviteLink ?? null,
+          title: item.title ?? null,
+          description: item.description ?? null,
+          memberCount: item.memberCount ?? item.member_count ?? null,
+          source: this.name,
+          discoveredAt: item.discoveredAt ?? item.discovered_at ?? null,
+        });
+      }
+      return out;
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error("Provider não respondeu dentro do tempo esperado.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
     }
-    return out;
-
   }
   validateGroup(reference: string) {
     return validatePublicTelegramGroup(reference);
@@ -186,12 +228,36 @@ class SeedDiscoveryProvider implements GroupDiscoveryProvider {
   }
 }
 
-export function getDiscoveryProvider(input: DiscoveryInput): GroupDiscoveryProvider | null {
+export async function getDiscoveryProvider(input: DiscoveryInput, workspaceId?: string): Promise<GroupDiscoveryProvider | null> {
   if ((input.seedReferences ?? []).length > 0) return new SeedDiscoveryProvider();
-  const url = process.env["GROUP_DIRECTORY_API_URL"];
-  const key = process.env["GROUP_DIRECTORY_API_KEY"];
+  const config = workspaceId ? await loadProviderConfig(workspaceId) : null;
+  const url = config?.apiUrl ?? process.env["GROUP_DIRECTORY_API_URL"];
+  const key = config?.apiKey ?? process.env["GROUP_DIRECTORY_API_KEY"];
   if (url && key) return new DirectoryDiscoveryProvider(url, key);
   return null;
+}
+
+export async function testConfiguredDiscoveryProvider(workspaceId: string): Promise<ProviderConnectionResult> {
+  const config = await loadProviderConfig(workspaceId);
+  if (!config) return { ok: false, code: "NOT_CONFIGURED", message: "Provider não configurado." };
+  try {
+    const url = new URL(config.apiUrl);
+    if (url.protocol !== "https:" && url.hostname !== "localhost" && url.hostname !== "127.0.0.1") {
+      return { ok: false, code: "INVALID_URL", message: "URL do provider inválida." };
+    }
+  } catch {
+    return { ok: false, code: "INVALID_URL", message: "URL do provider inválida." };
+  }
+  try {
+    const provider = new DirectoryDiscoveryProvider(config.apiUrl, config.apiKey);
+    await provider.discoverGroups({ keywords: ["connection-test"], categories: [], limit: 1 });
+    return { ok: true, code: "CONNECTED", message: "Provider conectado com sucesso." };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Erro externo ao testar o provider.";
+    if (message === "API Key inválida.") return { ok: false, code: "INVALID_KEY", message };
+    if (message.includes("tempo esperado")) return { ok: false, code: "TIMEOUT", message };
+    return { ok: false, code: "EXTERNAL_ERROR", message: message.slice(0, 300) };
+  }
 }
 
 export function discoveryProviderStatus(): { configured: boolean; name: string | null; missing: string[] } {
