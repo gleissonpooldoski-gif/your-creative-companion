@@ -52,6 +52,9 @@ function MiningPage() {
   const createCampaign = useServerFn(createCampaignFromGroups);
 
   const [keywords, setKeywords] = useState("");
+  const [providerChoice, setProviderChoice] = useState("auto");
+  const [sessionChoice, setSessionChoice] = useState("auto");
+
   const [category, setCategory] = useState<string>("todas");
   const [seeds, setSeeds] = useState("");
   const [importName, setImportName] = useState<string | null>(null);
@@ -98,8 +101,11 @@ function MiningPage() {
           keywords: parsed,
           ...(category !== "todas" ? { categories: [category] } : {}),
           ...(seedReferences.length ? { seedReferences } : {}),
+          provider: providerChoice as "auto" | "telegram_mtproto" | "directory_api",
+          ...(sessionChoice !== "auto" ? { mtprotoSessionId: sessionChoice } : {}),
         },
       });
+
     },
     onSuccess: async () => {
       toast.success("Job de mineração criado. A fila vai processá-lo e persistir os resultados.");
@@ -206,7 +212,44 @@ function MiningPage() {
               onChange={(event) => setKeywords(event.target.value)}
               placeholder={"marketing digital\ndropshipping"}
             />
+            <Label htmlFor="mining-provider" className="pt-2">
+              Origem da busca
+            </Label>
+            <Select value={providerChoice} onValueChange={setProviderChoice}>
+              <SelectTrigger id="mining-provider">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Automático (conta do Telegram, depois API)</SelectItem>
+                <SelectItem value="telegram_mtproto" disabled={!statusQuery.data?.mtprotoConfigured}>
+                  Conta real do Telegram{statusQuery.data?.mtprotoConfigured ? "" : " (nenhuma conectada)"}
+                </SelectItem>
+                <SelectItem value="directory_api">API de diretório</SelectItem>
+              </SelectContent>
+            </Select>
+            {(statusQuery.data?.mtprotoSessions ?? []).length > 0 && providerChoice !== "directory_api" ? (
+              <>
+                <Label htmlFor="mining-session" className="pt-2">
+                  Conta do Telegram
+                </Label>
+                <Select value={sessionChoice} onValueChange={setSessionChoice}>
+                  <SelectTrigger id="mining-session">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Escolher automaticamente</SelectItem>
+                    {(statusQuery.data?.mtprotoSessions ?? []).map((session: any) => (
+                      <SelectItem key={session.id} value={session.id}>
+                        {session.label} — {session.phone_masked}
+                        {session.flood_wait_until ? " (em espera)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </>
+            ) : null}
           </div>
+
           <div className="space-y-1.5">
             <Label htmlFor="mining-category">Categoria alvo</Label>
             <Select value={category} onValueChange={setCategory}>

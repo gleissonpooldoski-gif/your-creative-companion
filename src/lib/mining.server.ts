@@ -5,7 +5,7 @@
 import { GROUP_CATEGORIES, computeGroupScore, normalizeGroupReference } from "@/lib/groups/normalize";
 
 const GROUP_CATEGORY_VALUES: string[] = GROUP_CATEGORIES.map((item) => item.value);
-import { PROVIDER_NOT_CONFIGURED, getDiscoveryProvider } from "@/lib/providers/group-discovery.server";
+import { PROVIDER_NOT_CONFIGURED, resolveDiscovery } from "@/lib/providers/group-discovery.server";
 
 type Admin = { from: (t: string) => any; rpc: (fn: string, args?: Record<string, unknown>) => any };
 
@@ -116,14 +116,20 @@ export async function runMiningJob(
 
   const keywords: string[] = job.keywords ?? [];
   const categories: string[] = job.categories ?? [];
-  const provider = await getDiscoveryProvider({
+  const discoveryInput = {
     keywords,
     categories,
     limit: MAX_PER_RUN,
     ...(input.seedReferences ? { seedReferences: input.seedReferences } : {}),
-  }, input.workspaceId);
+  };
+  const resolution = await resolveDiscovery(discoveryInput, input.workspaceId, {
+    requested: (job.requested_provider ?? "auto") as "auto" | "telegram_mtproto" | "directory_api",
+    mtprotoSessionId: job.mtproto_session_id ?? null,
+  });
+  const provider = resolution.provider;
 
   if (!provider) {
+    const reason = resolution.reason ?? PROVIDER_NOT_CONFIGURED;
     await admin
       .from("group_mining_jobs")
       .update({
@@ -131,11 +137,18 @@ export async function runMiningJob(
         provider: "not_configured",
         progress_stage: "failed",
         progress_message: "Aguardando configuração do provider",
-        error: PROVIDER_NOT_CONFIGURED,
+        error: reason,
         completed_at: new Date().toISOString(),
       })
       .eq("id", job.id);
-    return { ok: true, message: PROVIDER_NOT_CONFIGURED };
+    return { ok: true, message: reason };
+  }
+
+  if (resolution.mtprotoSessionId) {
+    await admin
+      .from("group_mining_jobs")
+      .update({ mtproto_session_id: resolution.mtprotoSessionId })
+      .eq("id", job.id);
   }
 
   let found = 0;
@@ -145,19 +158,19 @@ export async function runMiningJob(
 
   let discovered;
   try {
-    discovered = await provider.discoverGroups({
-      keywords,
-      categories,
-      limit: MAX_PER_RUN,
-      ...(input.seedReferences ? { seedReferences: input.seedReferences } : {}),
-    });
+    discovered = await provider.discoverGroups(discoveryInput);
   } catch (error) {
     const message = error instanceof Error ? error.message : "falha no provider de descoberta";
+    const floodSeconds = Number((error as { retryAfterSeconds?: number })?.retryAfterSeconds ?? 0);
+    if (floodSeconds > 0 && resolution.mtprotoSessionId) {
+      const { recordFloodWait } = await import("@/lib/providers/mtproto-discovery.server");
+      await recordFloodWait(resolution.mtprotoSessionId, floodSeconds, message);
+    }
     await admin.from("group_mining_jobs").update({
       status: "failed",
       provider: provider.name,
       progress_stage: "failed",
-      progress_message: "Falha na descoberta",
+      progress_message: floodSeconds > 0 ? `Telegram pediu espera de ${floodSeconds}s` : "Falha na descoberta",
       error: message.slice(0, 1000),
       completed_at: new Date().toISOString(),
     }).eq("id", job.id);
@@ -170,6 +183,7 @@ export async function runMiningJob(
     progress_stage: "validating",
     progress_message: `Validando 0/${discovered.length}`,
   }).eq("id", job.id);
+
 
   const seenThisRun = new Set<string>();
 
@@ -252,6 +266,9 @@ export async function runMiningJob(
         keywords: matchedKeywords,
         source: candidate.source,
         mining_job_id: job.id,
+        entity_type: candidate.source === "telegram_mtproto" ? "megagroup" : normalized.isPublic ? "public_group" : "private_invite",
+        source_keyword: keywords[0] ?? null,
+
         last_validated_at: now,
       })
       .select("id")

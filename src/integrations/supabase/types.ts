@@ -854,10 +854,12 @@ export type Database = {
           error: string | null
           id: string
           keywords: string[]
+          mtproto_session_id: string | null
           processed_count: number
           progress_message: string | null
           progress_stage: string
           provider: string | null
+          requested_provider: string
           started_at: string | null
           status: string
           total_duplicate: number
@@ -876,10 +878,12 @@ export type Database = {
           error?: string | null
           id?: string
           keywords?: string[]
+          mtproto_session_id?: string | null
           processed_count?: number
           progress_message?: string | null
           progress_stage?: string
           provider?: string | null
+          requested_provider?: string
           started_at?: string | null
           status?: string
           total_duplicate?: number
@@ -898,10 +902,12 @@ export type Database = {
           error?: string | null
           id?: string
           keywords?: string[]
+          mtproto_session_id?: string | null
           processed_count?: number
           progress_message?: string | null
           progress_stage?: string
           provider?: string | null
+          requested_provider?: string
           started_at?: string | null
           status?: string
           total_duplicate?: number
@@ -912,6 +918,13 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "group_mining_jobs_mtproto_session_id_fkey"
+            columns: ["mtproto_session_id"]
+            isOneToOne: false
+            referencedRelation: "telegram_mtproto_sessions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "group_mining_jobs_workspace_id_fkey"
             columns: ["workspace_id"]
@@ -1031,6 +1044,7 @@ export type Database = {
           category: string | null
           created_at: string
           description: string | null
+          entity_type: string | null
           first_seen_at: string
           id: string
           invite_link: string | null
@@ -1043,6 +1057,7 @@ export type Database = {
           mining_job_id: string | null
           score: number
           source: string | null
+          source_keyword: string | null
           status: string
           telegram_id: string | null
           title: string
@@ -1055,6 +1070,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          entity_type?: string | null
           first_seen_at?: string
           id?: string
           invite_link?: string | null
@@ -1067,6 +1083,7 @@ export type Database = {
           mining_job_id?: string | null
           score?: number
           source?: string | null
+          source_keyword?: string | null
           status?: string
           telegram_id?: string | null
           title: string
@@ -1079,6 +1096,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           description?: string | null
+          entity_type?: string | null
           first_seen_at?: string
           id?: string
           invite_link?: string | null
@@ -1091,6 +1109,7 @@ export type Database = {
           mining_job_id?: string | null
           score?: number
           source?: string | null
+          source_keyword?: string | null
           status?: string
           telegram_id?: string | null
           title?: string
@@ -1428,6 +1447,50 @@ export type Database = {
             foreignKeyName: "mini_apps_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mtproto_service_configs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          last_test_message: string | null
+          last_tested_at: string | null
+          service_token_ciphertext: string
+          service_url: string
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          last_test_message?: string | null
+          last_tested_at?: string | null
+          service_token_ciphertext: string
+          service_url: string
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          last_test_message?: string | null
+          last_tested_at?: string | null
+          service_token_ciphertext?: string
+          service_url?: string
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mtproto_service_configs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: true
             referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
@@ -2143,6 +2206,59 @@ export type Database = {
           },
           {
             foreignKeyName: "telegram_credentials_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      telegram_mtproto_sessions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          flood_wait_until: string | null
+          id: string
+          label: string
+          last_connected_at: string | null
+          last_error: string | null
+          phone_masked: string
+          remote_session_id: string | null
+          status: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          flood_wait_until?: string | null
+          id?: string
+          label: string
+          last_connected_at?: string | null
+          last_error?: string | null
+          phone_masked: string
+          remote_session_id?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          flood_wait_until?: string | null
+          id?: string
+          label?: string
+          last_connected_at?: string | null
+          last_error?: string | null
+          phone_masked?: string
+          remote_session_id?: string | null
+          status?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "telegram_mtproto_sessions_workspace_id_fkey"
             columns: ["workspace_id"]
             isOneToOne: false
             referencedRelation: "workspaces"

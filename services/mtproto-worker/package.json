@@ -1,0 +1,17 @@
+{
+  "name": "reelyx-mtproto-worker",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Self-hosted Telegram MTProto worker used by Reelyx for real group discovery.",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "telegram": "^2.26.22"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

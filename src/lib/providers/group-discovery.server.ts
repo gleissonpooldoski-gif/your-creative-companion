@@ -252,14 +252,70 @@ class SeedDiscoveryProvider implements GroupDiscoveryProvider {
   }
 }
 
-export async function getDiscoveryProvider(input: DiscoveryInput, workspaceId?: string): Promise<GroupDiscoveryProvider | null> {
-  if ((input.seedReferences ?? []).length > 0) return new SeedDiscoveryProvider();
-  const config = workspaceId ? await loadProviderConfig(workspaceId) : null;
-  const url = config?.apiUrl ?? process.env["GROUP_DIRECTORY_API_URL"];
-  const key = config?.apiKey ?? process.env["GROUP_DIRECTORY_API_KEY"];
-  if (url && key) return new DirectoryDiscoveryProvider(url, key);
-  return null;
+export type RequestedProvider = "auto" | "telegram_mtproto" | "directory_api";
+
+export type DiscoveryResolution = {
+  provider: GroupDiscoveryProvider | null;
+  mtprotoSessionId: string | null;
+  /** Objective reason when no provider could be used. */
+  reason: string | null;
+};
+
+/**
+ * Resolution order:
+ *   1. operator-supplied references (manual import) -> always allowed
+ *   2. explicitly requested provider
+ *   3. Telegram MTProto (real Telegram search) when a connected session exists
+ *   4. Directory API when configured
+ * Returns an objective reason instead of inventing a provider.
+ */
+export async function resolveDiscovery(
+  input: DiscoveryInput,
+  workspaceId?: string,
+  options?: { requested?: RequestedProvider; mtprotoSessionId?: string | null },
+): Promise<DiscoveryResolution> {
+  if ((input.seedReferences ?? []).length > 0) {
+    return { provider: new SeedDiscoveryProvider(), mtprotoSessionId: null, reason: null };
+  }
+
+  const requested: RequestedProvider = options?.requested ?? "auto";
+
+  const tryMtproto = async (): Promise<DiscoveryResolution | null> => {
+    if (!workspaceId) return null;
+    const { resolveMtprotoProvider } = await import("@/lib/providers/mtproto-discovery.server");
+    const resolution = await resolveMtprotoProvider(workspaceId, options?.mtprotoSessionId ?? null);
+    if (resolution.ok) return { provider: resolution.provider, mtprotoSessionId: resolution.sessionId, reason: null };
+    return { provider: null, mtprotoSessionId: null, reason: resolution.message };
+  };
+
+  const tryDirectory = async (): Promise<DiscoveryResolution | null> => {
+    const config = workspaceId ? await loadProviderConfig(workspaceId) : null;
+    const url = config?.apiUrl ?? process.env["GROUP_DIRECTORY_API_URL"];
+    const key = config?.apiKey ?? process.env["GROUP_DIRECTORY_API_KEY"];
+    if (url && key) {
+      return { provider: new DirectoryDiscoveryProvider(url, key), mtprotoSessionId: null, reason: null };
+    }
+    return null;
+  };
+
+  if (requested === "telegram_mtproto") {
+    return (await tryMtproto()) ?? { provider: null, mtprotoSessionId: null, reason: PROVIDER_NOT_CONFIGURED };
+  }
+  if (requested === "directory_api") {
+    return (await tryDirectory()) ?? { provider: null, mtprotoSessionId: null, reason: PROVIDER_NOT_CONFIGURED };
+  }
+
+  const mtproto = await tryMtproto();
+  if (mtproto?.provider) return mtproto;
+  const directory = await tryDirectory();
+  if (directory?.provider) return directory;
+  return { provider: null, mtprotoSessionId: null, reason: mtproto?.reason ?? PROVIDER_NOT_CONFIGURED };
 }
+
+export async function getDiscoveryProvider(input: DiscoveryInput, workspaceId?: string): Promise<GroupDiscoveryProvider | null> {
+  return (await resolveDiscovery(input, workspaceId)).provider;
+}
+
 
 export async function testConfiguredDiscoveryProvider(workspaceId: string): Promise<ProviderConnectionResult> {
   const config = await loadProviderConfig(workspaceId);
